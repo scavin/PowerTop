@@ -1,0 +1,114 @@
+/* PowerTop - English Localization */
+
+// Power Source Description
+"AC Charging" = "AC Charging";
+"Battery Discharging" = "Battery Discharging";
+"AC Fully Charged" = "AC Fully Charged";
+"AC Powered" = "AC Powered";
+
+// Not Charging Reason
+"Optimized Battery Charging" = "Optimized Battery Charging";
+"Temperature Too High" = "Temperature Too High";
+"Battery Fully Charged" = "Battery Fully Charged";
+"Battery Abnormal" = "Battery Abnormal";
+"Charger Power Insufficient" = "Charger Power Insufficient";
+"Reason Code %1$@ (0x%2$@)" = "Reason Code %1$@ (0x%2$@)";
+
+// Power Flow Diagram
+"AC Adapter" = "AC Adapter";
+"Battery Charging" = "Battery Charging";
+"System" = "System";
+"Battery Discharge" = "Battery Discharge";
+
+// Metrics
+"System Power" = "System Power";
+"AC Adapter Output" = "AC Adapter Output";
+"Charger Spec" = "Charger Spec";
+"Data Source" = "Data Source";
+"Estimation Mode" = "Estimation Mode";
+
+// Battery Section
+"Battery Level" = "Battery Level";
+"Health" = "Health";
+"Battery Temp" = "Battery Temp";
+"Cycle Count" = "Cycle Count";
+"Battery Voltage" = "Battery Voltage";
+"Not Charging Reason" = "Not Charging Reason";
+
+// Footer
+"Details" = "Details";
+"Launch at Login" = "Launch at Login";
+"Quit" = "Quit";
+
+// Detail Window
+"PowerTop Details" = "PowerTop Details";
+
+// Detail - Power Section
+"Power" = "Power";
+"Power Source" = "Power Source";
+"Total System Power (Instant)" = "Total System Power (Instant)";
+"AC Adapter Total Output (DC)" = "AC Adapter Total Output (DC)";
+"Battery Charging Power" = "Battery Charging Power";
+"Battery Discharging Power" = "Battery Discharging Power";
+"Charger Rated Power" = "Charger Rated Power";
+"Charger Load Rate" = "Charger Load Rate";
+"Avg Wall Outlet Power (Long-term)" = "Avg Wall Outlet Power (Long-term)";
+"Avg Adapter Loss (Long-term)" = "Avg Adapter Loss (Long-term)";
+"Charger Output Voltage" = "Charger Output Voltage";
+"Charger Output Current" = "Charger Output Current";
+"Estimation Mode (No PowerTelemetryData)" = "Estimation Mode (No PowerTelemetryData)";
+
+// Detail - Battery Health
+"Battery Health" = "Battery Health";
+"Max Capacity (Health)" = "Max Capacity (Health)";
+"Design Capacity" = "Design Capacity";
+"Full Charge Capacity (FCC)" = "Full Charge Capacity (FCC)";
+"Nominal Full Charge Capacity" = "Nominal Full Charge Capacity";
+"design life" = "design life";
+"Battery Level (Cell Precise)" = "Battery Level (Cell Precise)";
+"Battery Pack Voltage" = "Battery Pack Voltage";
+"Discharging" = "Discharging";
+"Charging" = "Charging";
+"Idle" = "Idle";
+"Battery Current" = "Battery Current";
+"Battery Instant Current" = "Battery Instant Current";
+"Critical Low Battery" = "Critical Low Battery";
+"Yes" = "Yes";
+"No" = "No";
+"Permanent Failure Status" = "Permanent Failure Status";
+"Normal" = "Normal";
+"Abnormal (%d)" = "Abnormal (%d)";
+
+// Detail - Cell Data
+"Cell Data" = "Cell Data";
+"Cell %d Voltage" = "Cell %d Voltage";
+"Cell %d Full Charge Capacity" = "Cell %d Full Charge Capacity";
+"Optimized Charging Range" = "Optimized Charging Range";
+
+// Detail - Charging
+"Charging Details" = "Charging Details";
+"Currently Charging" = "Currently Charging";
+"Fully Charged" = "Fully Charged";
+"Cell Charging Voltage" = "Cell Charging Voltage";
+"Charging Current" = "Charging Current";
+"Max Charging Voltage Limit" = "Max Charging Voltage Limit";
+"None" = "None";
+
+// Detail - Lifetime
+"Lifetime Statistics" = "Lifetime Statistics";
+"Total Operating Time" = "Total Operating Time";
+"hours" = "hours";
+"minutes" = "minutes";
+"Battery Max Temperature" = "Battery Max Temperature";
+"Battery Min Temperature" = "Battery Min Temperature";
+"Battery Avg Temperature" = "Battery Avg Temperature";
+"Max Pack Voltage" = "Max Pack Voltage";
+"Min Pack Voltage" = "Min Pack Voltage";
+"Max Charging Current" = "Max Charging Current";
+"Max Discharging Current" = "Max Discharging Current";
+"Cell Safety Trigger Count" = "Cell Safety Trigger Count";
+
+// Detail - Device Info
+"Device Information" = "Device Information";
+"Battery Serial Number" = "Battery Serial Number";
+"Battery Gauge Chip" = "Battery Gauge Chip";

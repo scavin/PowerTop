@@ -1,0 +1,22 @@
+# Build
+build/
+*.o
+*.swp
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Xcode
+*.xcuserdata/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/

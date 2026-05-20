@@ -1,0 +1,114 @@
+/* PowerTop - 简体中文本地化 */
+
+// Power Source Description
+"AC Charging" = "AC 充电中";
+"Battery Discharging" = "电池放电";
+"AC Fully Charged" = "AC 已充满";
+"AC Powered" = "AC 供电";
+
+// Not Charging Reason
+"Optimized Battery Charging" = "优化电池充电";
+"Temperature Too High" = "温度过高";
+"Battery Fully Charged" = "电池已充满";
+"Battery Abnormal" = "电池异常";
+"Charger Power Insufficient" = "充电器功率不足";
+"Reason Code %1$@ (0x%2$@)" = "原因代码 %1$@ (0x%2$@)";
+
+// Power Flow Diagram
+"AC Adapter" = "AC 适配器";
+"Battery Charging" = "电池充电";
+"System" = "系统";
+"Battery Discharge" = "电池放电";
+
+// Metrics
+"System Power" = "系统功耗";
+"AC Adapter Output" = "AC 适配器输出";
+"Charger Spec" = "充电器规格";
+"Data Source" = "数据源";
+"Estimation Mode" = "估算模式";
+
+// Battery Section
+"Battery Level" = "电量";
+"Health" = "健康度";
+"Battery Temp" = "电池温度";
+"Cycle Count" = "循环次数";
+"Battery Voltage" = "电池电压";
+"Not Charging Reason" = "未充电原因";
+
+// Footer
+"Details" = "详细参数";
+"Launch at Login" = "开机启动";
+"Quit" = "退出";
+
+// Detail Window
+"PowerTop Details" = "PowerTop 详细参数";
+
+// Detail - Power Section
+"Power" = "电源";
+"Power Source" = "电源来源";
+"Total System Power (Instant)" = "系统总功耗 (瞬时)";
+"AC Adapter Total Output (DC)" = "AC 适配器总输出 (DC)";
+"Battery Charging Power" = "电池充电功率";
+"Battery Discharging Power" = "电池放电功率";
+"Charger Rated Power" = "充电器额定功率";
+"Charger Load Rate" = "充电器负载率";
+"Avg Wall Outlet Power (Long-term)" = "平均墙壁插座功耗 (长期)";
+"Avg Adapter Loss (Long-term)" = "平均适配器损耗 (长期)";
+"Charger Output Voltage" = "充电器输出电压";
+"Charger Output Current" = "充电器输出电流";
+"Estimation Mode (No PowerTelemetryData)" = "估算模式 (无 PowerTelemetryData)";
+
+// Detail - Battery Health
+"Battery Health" = "电池健康";
+"Max Capacity (Health)" = "最大容量（健康度）";
+"Design Capacity" = "设计容量";
+"Full Charge Capacity (FCC)" = "满充容量 (FCC)";
+"Nominal Full Charge Capacity" = "标称满充容量";
+"design life" = "设计寿命";
+"Battery Level (Cell Precise)" = "电量 (电芯精确值)";
+"Battery Pack Voltage" = "电池组电压";
+"Discharging" = "放电";
+"Charging" = "充电";
+"Idle" = "空闲";
+"Battery Current" = "电池电流";
+"Battery Instant Current" = "电池瞬时电流";
+"Critical Low Battery" = "临界低电量";
+"Yes" = "是";
+"No" = "否";
+"Permanent Failure Status" = "永久故障状态";
+"Normal" = "正常";
+"Abnormal (%d)" = "异常 (%d)";
+
+// Detail - Cell Data
+"Cell Data" = "电芯数据";
+"Cell %d Voltage" = "电芯 %d 电压";
+"Cell %d Full Charge Capacity" = "电芯 %d 满充容量";
+"Optimized Charging Range" = "优化充电保持范围";
+
+// Detail - Charging
+"Charging Details" = "充电详情";
+"Currently Charging" = "正在充电";
+"Fully Charged" = "已充满";
+"Cell Charging Voltage" = "电芯充电电压";
+"Charging Current" = "充电电流";
+"Max Charging Voltage Limit" = "最大充电电压限制";
+"None" = "无";
+
+// Detail - Lifetime
+"Lifetime Statistics" = "生命周期统计";
+"Total Operating Time" = "总运行时间";
+"hours" = "小时";
+"minutes" = "分钟";
+"Battery Max Temperature" = "电池历史最高温度";
+"Battery Min Temperature" = "电池历史最低温度";
+"Battery Avg Temperature" = "电池历史平均温度";
+"Max Pack Voltage" = "历史最高电池组电压";
+"Min Pack Voltage" = "历史最低电池组电压";
+"Max Charging Current" = "历史最大充电电流";
+"Max Discharging Current" = "历史最大放电电流";
+"Cell Safety Trigger Count" = "电芯安全保护触发次数";
+
+// Detail - Device Info
+"Device Information" = "设备信息";
+"Battery Serial Number" = "电池序列号";
+"Battery Gauge Chip" = "电量计芯片";
