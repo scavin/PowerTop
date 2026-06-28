@@ -39,15 +39,18 @@ A native macOS menu bar app for real-time power monitoring on Apple Silicon MacB
 Download `PowerTop.dmg` from the [Releases page](https://github.com/scavin/PowerTop/releases).
 
 1. Open `PowerTop.dmg` and drag **PowerTop** to the **Applications** folder.
-2. In Finder, open **Applications**, right-click **PowerTop**, and choose **Open**.
-3. Click **Open** again in the confirmation dialog. Future launches work normally.
+2. In Finder, open **Applications** and launch **PowerTop** once. When macOS
+   reports that it cannot verify the app, close the warning.
+3. Open **System Settings → Privacy & Security** and scroll down to **Security**.
+4. Next to the message that **PowerTop was blocked to protect your Mac**, click
+   **Open Anyway**.
+5. Authenticate with Touch ID or your password, then confirm **Open**. Future
+   launches work normally.
 
 PowerTop is ad-hoc signed but cannot be notarized because the project does not
-have an Apple Developer account. macOS may therefore require the right-click
-Open flow on first launch. If that option is unavailable, try launching once,
-then use **System Settings → Privacy & Security → Open Anyway**. In the uncommon
-case that it still cannot be opened, run this once after moving the app to
-`/Applications`:
+have an Apple Developer account, so this one-time Gatekeeper approval is
+expected. In the uncommon case that **Open Anyway** still does not work, run
+this once after moving the app to `/Applications`:
 
 ```bash
 xattr -cr /Applications/PowerTop.app
@@ -111,13 +114,15 @@ MIT License. See [LICENSE](LICENSE) for details.
 从 [Releases 页面](https://github.com/scavin/PowerTop/releases) 下载 `PowerTop.dmg`。
 
 1. 打开 `PowerTop.dmg`，将 **PowerTop** 拖入 **Applications（应用程序）**。
-2. 在 Finder 中打开“应用程序”，右键点击 **PowerTop**，选择**打开**。
-3. 在确认对话框中再次点击**打开**。之后可正常双击启动。
+2. 在 Finder 中打开“应用程序”，双击 **PowerTop** 启动一次。看到 macOS
+   无法验证该 App 的提示后，关闭提示。
+3. 打开**系统设置 → 隐私与安全性**，向下滚动到“安全性”。
+4. 找到“已阻止‘PowerTop’以保护 Mac”，点击**仍要打开**。
+5. 使用 Touch ID 或登录密码验证，然后确认**打开**。以后可以正常双击启动。
 
 PowerTop 已进行 ad-hoc 签名，但因为项目没有 Apple Developer 账号而无法进行
-Apple 公证，所以 macOS 首次启动时可能需要上述右键打开操作。极少数情况下若仍
-无法打开，可先启动一次，再前往**系统设置 → 隐私与安全性 → 仍要打开**。如果仍然
-失败，请在应用已移入 `/Applications` 后执行一次：
+Apple 公证，所以上述 Gatekeeper 放行操作首次启动时属于预期行为。极少数情况下
+点击**仍要打开**后依然失败，请在应用已移入 `/Applications` 后执行一次：
 
 ```bash
 xattr -cr /Applications/PowerTop.app
