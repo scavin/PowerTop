@@ -135,6 +135,7 @@ struct PowerData {
     var powerSourceDescription: String {
         if isBatteryCharging { return String(localized: "AC Charging") }
         if !effectiveIsOnAC { return String(localized: "Battery Discharging") }
+        if isSupplementalDischarge { return String(localized: "AC + Battery Powered") }
         if fullyCharged { return String(localized: "AC Fully Charged") }
         return String(localized: "AC Powered")
     }

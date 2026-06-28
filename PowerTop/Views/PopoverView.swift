@@ -49,26 +49,32 @@ struct PopoverView: View {
     private var powerFlowDiagram: some View {
         VStack(spacing: 6) {
             if data.effectiveIsOnAC {
-                // AC as source at top
-                sourceBox(title: String(localized: "AC Adapter"), value: String(format: "%.1f W", data.effectiveACOutputW), color: .green, icon: "powerplug.fill")
-                Image(systemName: "arrowtriangle.down.fill")
-                    .font(.system(size: 8)).foregroundStyle(.secondary)
-                // Destinations at bottom
-                if data.isBatteryCharging {
-                    // AC splits into: battery charging + system
-                    HStack(spacing: 10) {
-                        destBox(title: String(localized: "Battery Charging"), value: String(format: "%.1f W", data.batteryChargeRateW), color: .blue, icon: "battery.100.bolt")
-                        destBox(title: String(localized: "System"), value: String(format: "%.1f W", data.systemPowerW), color: .primary, icon: "desktopcomputer")
+                if data.isSupplementalDischarge {
+                    // AC and battery are both sources feeding the system.
+                    HStack(spacing: 6) {
+                        sourceBox(title: String(localized: "AC Adapter"), value: String(format: "%.1f W", data.effectiveACOutputW), color: .green, icon: "powerplug.fill")
+                        Image(systemName: "plus")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.secondary)
+                        sourceBox(title: String(localized: "Battery Discharge"), value: String(format: "%.1f W", data.batteryProvidesW), color: .orange, icon: "battery.50")
                     }
-                } else if data.isSupplementalDischarge {
-                    // AC + battery both feed system
-                    HStack(spacing: 10) {
-                        destBox(title: String(localized: "Battery Discharge"), value: String(format: "%.1f W", data.systemPowerW - data.acInputW), color: .orange, icon: "battery.50")
-                        destBox(title: String(localized: "System"), value: String(format: "%.1f W", data.systemPowerW), color: .primary, icon: "desktopcomputer")
-                    }
-                } else {
-                    // AC → system only
+                    Image(systemName: "arrowtriangle.down.fill")
+                        .font(.system(size: 8)).foregroundStyle(.secondary)
                     destBox(title: String(localized: "System"), value: String(format: "%.1f W", data.systemPowerW), color: .primary, icon: "desktopcomputer")
+                } else {
+                    // AC is the only source, feeding the system and optionally charging the battery.
+                    sourceBox(title: String(localized: "AC Adapter"), value: String(format: "%.1f W", data.effectiveACOutputW), color: .green, icon: "powerplug.fill")
+                    Image(systemName: "arrowtriangle.down.fill")
+                        .font(.system(size: 8)).foregroundStyle(.secondary)
+                    if data.isBatteryCharging {
+                        // AC splits into: battery charging + system
+                        HStack(spacing: 10) {
+                            destBox(title: String(localized: "Battery Charging"), value: String(format: "%.1f W", data.batteryChargeRateW), color: .blue, icon: "battery.100.bolt")
+                            destBox(title: String(localized: "System"), value: String(format: "%.1f W", data.systemPowerW), color: .primary, icon: "desktopcomputer")
+                        }
+                    } else {
+                        destBox(title: String(localized: "System"), value: String(format: "%.1f W", data.systemPowerW), color: .primary, icon: "desktopcomputer")
+                    }
                 }
             } else {
                 // Battery as source

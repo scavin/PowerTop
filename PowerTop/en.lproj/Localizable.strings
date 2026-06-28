@@ -5,6 +5,7 @@
 "Battery Discharging" = "Battery Discharging";
 "AC Fully Charged" = "AC Fully Charged";
 "AC Powered" = "AC Powered";
+"AC + Battery Powered" = "AC + Battery Powered";
 
 // Not Charging Reason
 "Optimized Battery Charging" = "Optimized Battery Charging";
