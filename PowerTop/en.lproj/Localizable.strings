@@ -113,3 +113,8 @@
 "Device Information" = "Device Information";
 "Battery Serial Number" = "Battery Serial Number";
 "Battery Gauge Chip" = "Battery Gauge Chip";
+
+// Detail - Software Info
+"Software Information" = "Software Information";
+"Version" = "Version";
+"Build" = "Build";

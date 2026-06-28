@@ -14,6 +14,7 @@ struct DetailWindowView: View {
                 chargingSection
                 lifetimeSection
                 deviceInfoSection
+                softwareInfoSection
             }
             .padding(20)
         }
@@ -26,14 +27,14 @@ struct DetailWindowView: View {
     private var powerSection: some View {
         DetailSection(title: String(localized: "Power"), icon: "bolt.fill", color: .green) {
             DetailRow(label: String(localized: "Power Source"), value: data.powerSourceDescription)
-            DetailRow(label: String(localized: "Total System Power (Instant)"), value: String(format: "%.1f W", data.systemPowerW), highlight: true)
+            DetailRow(label: String(localized: "Total System Power (Instant)"), value: data.formattedPower(data.systemPowerW), highlight: true)
             if data.effectiveIsOnAC {
-                DetailRow(label: String(localized: "AC Adapter Total Output (DC)"), value: String(format: "%.1f W", data.effectiveACOutputW))
+                DetailRow(label: String(localized: "AC Adapter Total Output (DC)"), value: data.formattedPower(data.effectiveACOutputW))
             }
             if data.batteryPowerW != 0 {
                 DetailRow(
                     label: data.isBatteryCharging ? String(localized: "Battery Charging Power") : String(localized: "Battery Discharging Power"),
-                    value: String(format: "%.1f W", abs(data.batteryPowerW))
+                    value: data.formattedPower(abs(data.batteryPowerW))
                 )
             }
             if data.effectiveIsOnAC && data.acAdapterWattage > 0 {
@@ -92,7 +93,7 @@ struct DetailWindowView: View {
                 DetailRow(label: String(localized: "Battery Pack Voltage"), value: String(format: "%.2f V", Double(voltage) / 1000.0))
             }
             if let amp = data.batteryAmperageMA {
-                let sign = amp > 0 ? String(localized: "Discharging") : (amp < 0 ? String(localized: "Charging") : String(localized: "Idle"))
+                let sign = amp < 0 ? String(localized: "Discharging") : (amp > 0 ? String(localized: "Charging") : String(localized: "Idle"))
                 DetailRow(label: String(localized: "Battery Current"), value: String(format: "%d mA (%@)", abs(amp), sign))
             }
             if let instant = data.instantAmperageMA {
@@ -204,6 +205,23 @@ struct DetailWindowView: View {
                 DetailRow(label: String(localized: "Battery Gauge Chip"), value: name)
             }
         }
+    }
+
+    // MARK: - Software Info
+
+    private var softwareInfoSection: some View {
+        DetailSection(title: String(localized: "Software Information"), icon: "app.badge", color: .blue) {
+            DetailRow(label: String(localized: "Version"), value: appVersion)
+            DetailRow(label: String(localized: "Build"), value: appBuild)
+        }
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+    }
+
+    private var appBuild: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
     }
 }
 

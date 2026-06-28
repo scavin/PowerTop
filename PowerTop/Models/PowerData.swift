@@ -25,6 +25,7 @@ struct PowerData {
     let cycleCount: Int?
     let adapterDescription: String?
     let dataSource: PowerDataSource
+    let isPowerEstimated: Bool
     let timestamp: Date
 
     // Battery health
@@ -66,6 +67,11 @@ struct PowerData {
     let batteryCellDisconnectCount: Int?
 
     // MARK: - Computed properties
+
+    func formattedPower(_ watts: Double, compact: Bool = false) -> String {
+        let prefix = isPowerEstimated ? "≈" : ""
+        return String(format: compact ? "%@%.1fW" : "%@%.1f W", prefix, watts)
+    }
 
     /// Whether we can confidently determine we're on battery (no AC at all).
     /// When ExternalConnected=false AND SystemPowerIn=0, even if IsCharging is stale=true,
@@ -165,7 +171,8 @@ struct PowerData {
         systemVoltageMV: nil, systemCurrentMA: nil,
         batteryVoltageMV: nil, batteryAmperageMA: nil,
         batteryTemperatureC: nil, cycleCount: nil,
-        adapterDescription: nil, dataSource: .telemetry, timestamp: Date(),
+        adapterDescription: nil, dataSource: .telemetry,
+        isPowerEstimated: false, timestamp: Date(),
         batteryHealthPercent: nil, designCapacityMAH: nil, rawMaxCapacityMAH: nil,
         nominalChargeCapacityMAH: nil, designCycleCount: nil,
         chargingVoltageMV: nil, chargingCurrentMA: nil,

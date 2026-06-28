@@ -113,3 +113,8 @@
 "Device Information" = "设备信息";
 "Battery Serial Number" = "电池序列号";
 "Battery Gauge Chip" = "电量计芯片";
+
+// Detail - Software Info
+"Software Information" = "软件信息";
+"Version" = "版本";
+"Build" = "构建号";

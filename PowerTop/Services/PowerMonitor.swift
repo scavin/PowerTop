@@ -24,16 +24,33 @@ final class PowerMonitor {
     }
 
     private var timer: Timer?
+    private var adapterProbeTimer: Timer?
     private var powerSourceNotifier: CFRunLoopSource?
+    private var lastAdapterSignature: AdapterSignature?
+    private var adapterConnectedOverride: Bool?
+    private var adapterEstimateUntil: Date?
+    private var transitionRefreshGeneration = 0
     private let updateInterval: TimeInterval = 2.0
+    private let adapterProbeInterval: TimeInterval = 0.25
+
+    private struct AdapterSignature: Equatable {
+        let wattage: Int
+        let description: String?
+
+        var isConnected: Bool { wattage > 0 }
+    }
 
     init() {
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
     }
 
     func start() {
+        let adapterSignature = readAdapterSignature()
+        lastAdapterSignature = adapterSignature
+        adapterConnectedOverride = adapterSignature?.isConnected
         updateData()
         scheduleTimer()
+        scheduleAdapterProbeTimer()
         setupPowerSourceNotification()
 
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -49,6 +66,8 @@ final class PowerMonitor {
     func stop() {
         timer?.invalidate()
         timer = nil
+        adapterProbeTimer?.invalidate()
+        adapterProbeTimer = nil
         if let notifier = powerSourceNotifier {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), notifier, .commonModes)
             powerSourceNotifier = nil
@@ -58,11 +77,15 @@ final class PowerMonitor {
     @objc private func systemDidSleep() {
         timer?.invalidate()
         timer = nil
+        adapterProbeTimer?.invalidate()
+        adapterProbeTimer = nil
     }
 
     @objc private func systemDidWake() {
+        pollAdapterChanges()
         updateData()
         scheduleTimer()
+        scheduleAdapterProbeTimer()
     }
 
     // MARK: - IOPS Power Source Notification
@@ -72,14 +95,8 @@ final class PowerMonitor {
         let callback: IOPowerSourceCallbackType = { ctx in
             guard let ctx = ctx else { return }
             let monitor = Unmanaged<PowerMonitor>.fromOpaque(ctx).takeUnretainedValue()
-            // Multiple delayed refreshes to handle IOKit property update lag.
-            // Unplugging takes longer to propagate than plugging in, so we need
-            // more refreshes over a longer window.
-            for delay: TimeInterval in [0.1, 0.3, 0.6, 1.0, 1.5, 2.0, 3.0, 5.0] {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                    monitor.updateData()
-                }
-            }
+            monitor.pollAdapterChanges()
+            monitor.scheduleTransitionRefreshes()
         }
         powerSourceNotifier = IOPSNotificationCreateRunLoopSource(callback, context)?.takeRetainedValue()
         if let notifier = powerSourceNotifier {
@@ -90,28 +107,101 @@ final class PowerMonitor {
     // MARK: - Timer
 
     private func scheduleTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
+        timer?.invalidate()
+        let refreshTimer = Timer(timeInterval: updateInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateData()
             }
         }
+        RunLoop.main.add(refreshTimer, forMode: .common)
+        timer = refreshTimer
+    }
+
+    /// AdapterDetails updates much sooner than the rest of the battery telemetry
+    /// when a USB-C PD adapter is attached, removed, or renegotiated. Probe only
+    /// that lightweight property so a charger transition can trigger immediate
+    /// full-data refreshes instead of waiting for stale IOPS values to expire.
+    private func scheduleAdapterProbeTimer() {
+        adapterProbeTimer?.invalidate()
+        let probeTimer = Timer(timeInterval: adapterProbeInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.pollAdapterChanges()
+            }
+        }
+        RunLoop.main.add(probeTimer, forMode: .common)
+        adapterProbeTimer = probeTimer
+    }
+
+    private func pollAdapterChanges() {
+        guard let signature = readAdapterSignature() else { return }
+
+        guard let previous = lastAdapterSignature else {
+            lastAdapterSignature = signature
+            adapterConnectedOverride = signature.isConnected
+            return
+        }
+        guard signature != previous else { return }
+
+        lastAdapterSignature = signature
+        // During a transition, AdapterDetails is authoritative because
+        // ExternalConnected and SystemPowerIn commonly retain their old values.
+        adapterConnectedOverride = signature.isConnected
+        // The remaining power telemetry can describe the previous adapter for
+        // many seconds. Do not render that stale flow while PD renegotiates.
+        adapterEstimateUntil = Date().addingTimeInterval(15)
+        scheduleTransitionRefreshes()
+    }
+
+    private func scheduleTransitionRefreshes() {
+        transitionRefreshGeneration += 1
+        let generation = transitionRefreshGeneration
+
+        for delay: TimeInterval in [0, 0.1, 0.25, 0.5, 1, 1.5, 2, 3, 5, 8, 12] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, self.transitionRefreshGeneration == generation else { return }
+                self.updateData()
+            }
+        }
+    }
+
+    func refresh() {
+        updateData()
     }
 
     private func updateData() {
-        let data = readPowerData()
+        let useAdapterEstimate = adapterEstimateUntil.map { Date() < $0 } ?? false
+        let data = readPowerData(
+            adapterConnectedOverride: adapterConnectedOverride,
+            useAdapterEstimate: useAdapterEstimate
+        )
         self.currentData = data
     }
 
     // MARK: - IOKit Reading
 
-    private nonisolated func readPowerData() -> PowerData {
+    private nonisolated func readAdapterSignature() -> AdapterSignature? {
+        guard let props = getIOServiceProperties(className: "AppleSmartBattery") else {
+            return nil
+        }
+        let adapterDetails = extractDict(from: props, key: "AdapterDetails")
+        return AdapterSignature(
+            wattage: adapterDetails.flatMap { extractInt(from: $0, key: "Watts") } ?? 0,
+            description: adapterDetails.flatMap { extractString(from: $0, key: "Description") }
+        )
+    }
+
+    private nonisolated func readPowerData(
+        adapterConnectedOverride: Bool?,
+        useAdapterEstimate: Bool
+    ) -> PowerData {
         guard let props = getIOServiceProperties(className: "AppleSmartBattery") else {
             return .empty
         }
 
         // Basic battery info
-        let isOnAC = extractBool(from: props, key: "ExternalConnected") ?? false
-        let isCharging = extractBool(from: props, key: "IsCharging") ?? false
+        let rawIsOnAC = extractBool(from: props, key: "ExternalConnected") ?? false
+        let isOnAC = adapterConnectedOverride ?? rawIsOnAC
+        let isCharging = isOnAC && (extractBool(from: props, key: "IsCharging") ?? false)
         let fullyCharged = extractBool(from: props, key: "FullyCharged") ?? false
         let currentCapacity = extractInt(from: props, key: "CurrentCapacity") ?? 0
         let maxCapacity = extractInt(from: props, key: "MaxCapacity") ?? 100
@@ -178,8 +268,8 @@ final class PowerMonitor {
             _ acInputW: Double,
             _ wallPowerW: Double?, _ adapterLossW: Double?,
             _ sysVoltage: Int?, _ sysCurrent: Int?,
-            _ dataSource: PowerDataSource
-        ) -> PowerData = { spw, bpw, aiw, wall, loss, sv, sc, ds in
+            _ dataSource: PowerDataSource, _ isEstimated: Bool
+        ) -> PowerData = { spw, bpw, aiw, wall, loss, sv, sc, ds, estimated in
             PowerData(
                 systemPowerW: spw, batteryPowerW: bpw, acInputW: aiw,
                 acAdapterWattage: acAdapterWattage, batteryPercent: batteryPercent,
@@ -189,7 +279,7 @@ final class PowerMonitor {
                 batteryVoltageMV: voltage, batteryAmperageMA: amperage,
                 batteryTemperatureC: temperature.map { Double($0) / 100.0 },
                 cycleCount: cycleCount, adapterDescription: adapterDescription,
-                dataSource: ds, timestamp: Date(),
+                dataSource: ds, isPowerEstimated: estimated, timestamp: Date(),
                 batteryHealthPercent: batteryHealthPercent,
                 designCapacityMAH: designCapacity, rawMaxCapacityMAH: rawMaxCapacity,
                 nominalChargeCapacityMAH: nominalChargeCapacity,
@@ -238,8 +328,42 @@ final class PowerMonitor {
             // source for whether AC is physically present, so discard stale
             // AC telemetry while running on battery.
             let acInputW = isOnAC ? Double(systemPowerIn) / 1000.0 : 0
-            // BatteryPower: positive = discharge, negative (via UInt64 overflow) = charge
+            // IOKit BatteryPower uses positive values for charging and negative
+            // values for discharging. PowerData exposes the opposite convention:
+            // positive = discharge, negative = charge.
             let batteryPowerFromTelemetry = Double(batteryPower) / 1000.0
+            let normalizedBatteryPowerW = -batteryPowerFromTelemetry
+
+            // AdapterDetails changes promptly, while the telemetry block may
+            // remain frozen on the previous PD contract. During that window,
+            // derive a conservative topology from current system load and the
+            // new adapter rating. Also reject impossible telemetry such as a
+            // 20 W adapter allegedly supplying 55 W.
+            let reportedACInputW = Double(systemPowerIn) / 1000.0
+            let telemetryExceedsAdapter = isOnAC
+                && acAdapterWattage > 0
+                && reportedACInputW > Double(acAdapterWattage) * 1.1
+            if useAdapterEstimate || telemetryExceedsAdapter {
+                let estimatedSystemPowerW = abs(Double(systemLoad) / 1000.0)
+                let estimatedACInputW = isOnAC
+                    ? min(estimatedSystemPowerW, Double(acAdapterWattage))
+                    : 0
+                let estimatedBatteryPowerW = isOnAC
+                    ? max(estimatedSystemPowerW - estimatedACInputW, 0)
+                    : estimatedSystemPowerW
+
+                return buildResult(
+                    estimatedSystemPowerW,
+                    estimatedBatteryPowerW,
+                    estimatedACInputW,
+                    wallEnergy.map { Double($0) / 1000.0 },
+                    adapterLoss.map { Double($0) / 1000.0 },
+                    sysVoltage,
+                    sysCurrent,
+                    .telemetry,
+                    true
+                )
+            }
 
             // Determine charge rate: prefer Amperage×Voltage, fallback to telemetry BatteryPower
             let chargeRateW: Double
@@ -258,8 +382,9 @@ final class PowerMonitor {
             if isCharging && acInputW > chargeRateW {
                 systemPowerW = acInputW - chargeRateW
             } else if systemLoad < 0 {
-                // On battery: SystemLoad is negative, BatteryPower is positive (= discharge rate = system power)
-                systemPowerW = batteryPowerFromTelemetry > 0 ? batteryPowerFromTelemetry : abs(Double(systemLoad) / 1000.0)
+                // On battery: SystemLoad can be negative; prefer the normalized
+                // positive battery discharge rate when it is available.
+                systemPowerW = normalizedBatteryPowerW > 0 ? normalizedBatteryPowerW : abs(Double(systemLoad) / 1000.0)
             } else {
                 systemPowerW = Double(systemLoad) / 1000.0
             }
@@ -274,7 +399,7 @@ final class PowerMonitor {
             if isCharging {
                 batteryPowerW = -chargeRateW
             } else {
-                batteryPowerW = batteryPowerFromTelemetry
+                batteryPowerW = normalizedBatteryPowerW
             }
 
             // On battery with no telemetry, use Amperage×Voltage as system power
@@ -286,7 +411,7 @@ final class PowerMonitor {
                 systemPowerW, batteryPowerW, acInputW,
                 wallEnergy.map { Double($0) / 1000.0 },
                 adapterLoss.map { Double($0) / 1000.0 },
-                sysVoltage, sysCurrent, .telemetry
+                sysVoltage, sysCurrent, .telemetry, false
             )
         }
 
@@ -294,10 +419,12 @@ final class PowerMonitor {
         var systemPowerW: Double = 0
         var batteryPowerW: Double = 0
         if let v = voltage, let a = amperage {
-            batteryPowerW = Double(a) * Double(v) / 1_000_000.0
+            // AppleSmartBattery Amperage is negative while discharging and
+            // positive while charging. Normalize to PowerData's convention.
+            batteryPowerW = -Double(a) * Double(v) / 1_000_000.0
             if !isOnAC { systemPowerW = abs(batteryPowerW) }
         }
 
-        return buildResult(systemPowerW, batteryPowerW, 0, nil, nil, nil, nil, .legacy)
+        return buildResult(systemPowerW, batteryPowerW, 0, nil, nil, nil, nil, .legacy, true)
     }
 }
