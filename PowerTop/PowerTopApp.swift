@@ -41,7 +41,25 @@ struct PowerTopApp: App {
             Label {
                 Text(monitor.currentData.formattedPower(monitor.currentData.systemPowerW, compact: true))
             } icon: {
-                Image(systemName: monitor.currentData.isOnAC ? "bolt.fill" : monitor.currentData.batteryIconName)
+                let isOnAC = monitor.currentData.isOnAC
+                let percent = monitor.currentData.batteryPercent
+                let systemName = isOnAC ? "bolt.fill" : monitor.currentData.batteryIconName
+                
+                if isOnAC {
+                    Image(systemName: systemName)
+                        .renderingMode(.original)
+                        .foregroundStyle(.green)
+                } else if percent <= 20 {
+                    Image(systemName: systemName)
+                        .renderingMode(.original)
+                        .foregroundStyle(.red)
+                } else if percent <= 50 {
+                    Image(systemName: systemName)
+                        .renderingMode(.original)
+                        .foregroundStyle(.orange)
+                } else {
+                    Image(systemName: systemName)
+                }
             }
         }
         .menuBarExtraStyle(.window)
