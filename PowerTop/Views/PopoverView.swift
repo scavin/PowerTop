@@ -28,7 +28,7 @@ struct PopoverView: View {
 
     private var headerSection: some View {
         HStack {
-            Image(systemName: data.effectiveIsOnAC ? "powerplug.fill" : "battery.50")
+            Image(systemName: data.effectiveIsOnAC ? "powerplug.fill" : data.batteryIconName)
                 .foregroundStyle(data.effectiveIsOnAC ? .green : .orange)
                 .font(.title3)
 

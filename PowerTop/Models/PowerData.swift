@@ -73,6 +73,22 @@ struct PowerData {
         return String(format: compact ? "%@%.1fW" : "%@%.1f W", prefix, watts)
     }
 
+    /// Returns the appropriate battery SF Symbol based on the current percentage
+    var batteryIconName: String {
+        switch batteryPercent {
+        case 88...:
+            return "battery.100"
+        case 63..<88:
+            return "battery.75"
+        case 38..<63:
+            return "battery.50"
+        case 13..<38:
+            return "battery.25"
+        default:
+            return "battery.0"
+        }
+    }
+
     /// Whether we can confidently determine we're on battery (no AC at all).
     /// When ExternalConnected=false AND SystemPowerIn=0, even if IsCharging is stale=true,
     /// we know we're on battery because no AC power is flowing.

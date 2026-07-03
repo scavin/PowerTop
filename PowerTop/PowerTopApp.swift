@@ -41,7 +41,7 @@ struct PowerTopApp: App {
             Label {
                 Text(monitor.currentData.formattedPower(monitor.currentData.systemPowerW, compact: true))
             } icon: {
-                Image(systemName: monitor.currentData.isOnAC ? "bolt.fill" : "battery.50")
+                Image(systemName: monitor.currentData.isOnAC ? "bolt.fill" : monitor.currentData.batteryIconName)
             }
         }
         .menuBarExtraStyle(.window)
