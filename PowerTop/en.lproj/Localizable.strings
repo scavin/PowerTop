@@ -3,9 +3,9 @@
 // Power Source Description
 "AC Charging" = "AC Charging";
 "Battery Discharging" = "Battery Discharging";
-"AC Fully Charged" = "AC Fully Charged";
 "AC Powered" = "AC Powered";
-"AC + Battery Powered" = "AC + Battery Powered";
+"AC + Battery Supplement" = "AC + Battery Supplement";
+"AC Connecting" = "AC Connecting";
 
 // Not Charging Reason
 "Optimized Battery Charging" = "Optimized Battery Charging";
@@ -20,6 +20,7 @@
 "Battery Charging" = "Battery Charging";
 "System" = "System";
 "Battery Discharge" = "Battery Discharge";
+"Battery Supplement" = "Battery Supplement";
 
 // Metrics
 "System Power" = "System Power";
@@ -39,35 +40,57 @@
 // Footer
 "Details" = "Details";
 "Launch at Login" = "Launch at Login";
+"Show Power in Menu Bar" = "Show Power in Menu Bar";
 "Quit" = "Quit";
 
 // Detail Window
 "PowerTop Details" = "PowerTop Details";
 
 // Detail - Power Section
+"Current Power" = "Current Power";
 "Power" = "Power";
 "Power Source" = "Power Source";
-"Total System Power (Instant)" = "Total System Power (Instant)";
-"AC Adapter Total Output (DC)" = "AC Adapter Total Output (DC)";
 "Battery Charging Power" = "Battery Charging Power";
 "Battery Discharging Power" = "Battery Discharging Power";
-"Charger Rated Power" = "Charger Rated Power";
 "Charger Load Rate" = "Charger Load Rate";
-"Avg Wall Outlet Power (Long-term)" = "Avg Wall Outlet Power (Long-term)";
-"Avg Adapter Loss (Long-term)" = "Avg Adapter Loss (Long-term)";
+"Charging Status" = "Charging Status";
+"Not Charging" = "Not Charging";
+"Historical Averages" = "Historical Averages";
+"Avg Wall Outlet Power" = "Avg Wall Outlet Power";
+"Avg Adapter Loss" = "Avg Adapter Loss";
 "Charger Output Voltage" = "Charger Output Voltage";
 "Charger Output Current" = "Charger Output Current";
-"Estimation Mode (No PowerTelemetryData)" = "Estimation Mode (No PowerTelemetryData)";
+"Estimation Mode — telemetry unavailable" = "Estimation Mode — telemetry unavailable";
+"Remaining Capacity" = "Remaining Capacity";
+"Est. Time to Empty" = "Est. Time to Empty";
+"Est. Time to Full" = "Est. Time to Full";
+"Est. Time to %d%%" = "Est. Time to %d%%";
+"Estimated to %d%% charge limit (%@)." = "Estimated to %d%% charge limit (%@).";
+"Charge Limit" = "Charge Limit";
+"macOS setting" = "macOS setting";
+"Optimized Charging" = "Optimized Charging";
+"Estimated from remaining energy and smoothed power (macOS no longer provides this)." = "Estimated from remaining energy and smoothed power (macOS no longer provides this).";
+"Average System Power" = "Average System Power";
+"Manufacture Date" = "Manufacture Date";
+"Manufacture Week Format" = "%d W%02d";
 
 // Detail - Battery Health
 "Battery Health" = "Battery Health";
-"Max Capacity (Health)" = "Max Capacity (Health)";
+"At a Glance" = "At a Glance";
+"Capacity" = "Capacity";
+"Charging & Care" = "Charging & Care";
+"Live Readings" = "Live Readings";
+"Capacity Details" = "Capacity Details";
+"Electrical Readings" = "Electrical Readings";
+"—" = "—";
+"Status & Alerts" = "Status & Alerts";
 "Design Capacity" = "Design Capacity";
-"Full Charge Capacity (FCC)" = "Full Charge Capacity (FCC)";
+"Current Full Charge" = "Current Full Charge";
+"Calibrated Full Charge" = "Calibrated Full Charge";
+"Remaining Charge" = "Remaining Charge";
+"Full Charge Capacity" = "Full Charge Capacity";
 "Nominal Full Charge Capacity" = "Nominal Full Charge Capacity";
 "design life" = "design life";
-"Battery Level (Cell Precise)" = "Battery Level (Cell Precise)";
-"Battery Pack Voltage" = "Battery Pack Voltage";
 "Discharging" = "Discharging";
 "Charging" = "Charging";
 "Idle" = "Idle";
@@ -82,13 +105,30 @@
 
 // Detail - Cell Data
 "Cell Data" = "Cell Data";
+"Cell %d" = "Cell %d";
+"—" = "—";
+"Battery topology: %dS%dP (%d cells)" = "Battery topology: %dS%dP (%d cells)";
+"Battery topology: %d series groups" = "Battery topology: %d series groups";
+"Battery topology: %d cells" = "Battery topology: %d cells";
+"Series Groups" = "Series Groups";
+"Series Group %d" = "Series Group %d";
+"Parallel Cell Currents" = "Parallel Cell Currents";
+"Series Group %d · Cell %d" = "Series Group %d · Cell %d";
+"Series group Qmax is the parallel pair's estimated full-charge capacity (mAh), not derived from cell currents." = "Series group Qmax is the parallel pair's estimated full-charge capacity (mAh), not derived from cell currents.";
+"Qmax %d mAh" = "Qmax %d mAh";
+"Instantaneous current per parallel cell; unequal split within a group is normal." = "Instantaneous current per parallel cell; unequal split within a group is normal.";
+"Cell Balance" = "Cell Balance";
+"Series Voltage Balance" = "Series Voltage Balance";
+"Parallel Current Balance" = "Parallel Current Balance";
+"%d mA max within-group spread — %@" = "%d mA max within-group spread — %@";
+"%d mV spread — %@" = "%d mV spread — %@";
+"Fair" = "Fair";
+"Worth Checking" = "Worth Checking";
 "Cell %d Voltage" = "Cell %d Voltage";
 "Cell %d Full Charge Capacity" = "Cell %d Full Charge Capacity";
 "Optimized Charging Range" = "Optimized Charging Range";
 
 // Detail - Charging
-"Charging Details" = "Charging Details";
-"Currently Charging" = "Currently Charging";
 "Fully Charged" = "Fully Charged";
 "Cell Charging Voltage" = "Cell Charging Voltage";
 "Charging Current" = "Charging Current";
@@ -107,12 +147,22 @@
 "Min Pack Voltage" = "Min Pack Voltage";
 "Max Charging Current" = "Max Charging Current";
 "Max Discharging Current" = "Max Discharging Current";
-"Cell Safety Trigger Count" = "Cell Safety Trigger Count";
+"Since First Use" = "Since First Use";
+"Protection Trigger Count" = "Protection Trigger Count";
+"0 (normal)" = "0 (normal)";
 
 // Detail - Device Info
 "Device Information" = "Device Information";
 "Battery Serial Number" = "Battery Serial Number";
+"Battery Management Chip" = "Battery Management Chip";
 "Battery Gauge Chip" = "Battery Gauge Chip";
+"Device info is shown locally only and is not uploaded." = "Device info is shown locally only and is not uploaded.";
+
+// Detail - Footer
+"Updated at %@" = "Updated at %@";
+
+// Hardware availability
+"Built-in battery not detected. PowerTop requires a MacBook." = "Built-in battery not detected. PowerTop requires a MacBook.";
 
 // Detail - Software Info
 "Software Information" = "Software Information";

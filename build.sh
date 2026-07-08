@@ -18,24 +18,38 @@ if [[ ! "$BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
     exit 1
 fi
 
-echo "=== Building $APP_NAME $VERSION ($BUILD_NUMBER) ==="
+# Prefer the Xcode SDK to avoid Command Line Tools SDK/compiler mismatches.
+if [ -d "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" ]; then
+    SDK="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+    SWIFTC="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+else
+    SDK="$(xcrun --show-sdk-path)"
+    SWIFTC="swiftc"
+fi
+
+# Clean previous build
 rm -rf "$BUILD_DIR"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 
 SWIFT_FILES=(
+    "$PROJECT_DIR/PowerTop/Utilities/AppInfo.swift"
     "$PROJECT_DIR/PowerTop/Utilities/IOKitHelpers.swift"
+    "$PROJECT_DIR/PowerTop/Utilities/BatteryTimeEstimator.swift"
+    "$PROJECT_DIR/PowerTop/Utilities/BatteryChargeLimit.swift"
+    "$PROJECT_DIR/PowerTop/Utilities/TemperatureUnits.swift"
+    "$PROJECT_DIR/PowerTop/Models/PowerConnectionPhase.swift"
     "$PROJECT_DIR/PowerTop/Models/PowerData.swift"
     "$PROJECT_DIR/PowerTop/Services/PowerMonitor.swift"
     "$PROJECT_DIR/PowerTop/Views/PowerRowView.swift"
+    "$PROJECT_DIR/PowerTop/Views/MenuBarLabelView.swift"
     "$PROJECT_DIR/PowerTop/Views/PopoverView.swift"
     "$PROJECT_DIR/PowerTop/Views/DetailWindowView.swift"
     "$PROJECT_DIR/PowerTop/PowerTopApp.swift"
 )
 
-echo "Compiling arm64 executable..."
-xcrun swiftc \
+"$SWIFTC" \
     -target arm64-apple-macosx14.0 \
-    -sdk "$(xcrun --show-sdk-path --sdk macosx)" \
+    -sdk "$SDK" \
     -framework SwiftUI \
     -framework IOKit \
     -framework CoreFoundation \
@@ -77,4 +91,12 @@ done
 # Remove any metadata introduced by local tools before signing.
 xattr -cr "$APP_BUNDLE"
 
-echo "Built $APP_BUNDLE"
+ZIP_PATH="$BUILD_DIR/$APP_NAME.zip"
+ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ZIP_PATH"
+
+echo "=== Build complete ==="
+echo "App bundle: $APP_BUNDLE"
+echo "Zip archive: $ZIP_PATH"
+echo ""
+echo "To run: open \"$APP_BUNDLE\""
+echo "Or:     \"$EXECUTABLE\""

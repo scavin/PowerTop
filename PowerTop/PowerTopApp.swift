@@ -28,68 +28,56 @@ private final class SingleInstanceGuard {
     }
 }
 
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    let monitor = PowerMonitor()
+    private var didStart = false
+
+    private func startIfNeeded() {
+        guard !didStart else { return }
+        didStart = true
+        monitor.start()
+    }
+
+    nonisolated func applicationDidFinishLaunching(_ notification: Notification) {
+        Task { @MainActor in
+            startIfNeeded()
+        }
+    }
+
+    nonisolated func applicationDidBecomeActive(_ notification: Notification) {
+        Task { @MainActor in
+            monitor.refreshNow()
+        }
+    }
+
+    nonisolated func applicationWillTerminate(_ notification: Notification) {
+        Task { @MainActor in
+            monitor.stop()
+        }
+    }
+}
+
 @main
 struct PowerTopApp: App {
-    private static let instanceGuard = SingleInstanceGuard()
-    @State private var monitor = PowerMonitor()
-    @Environment(\.openWindow) private var openWindow
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+    private var monitor: PowerMonitor { appDelegate.monitor }
 
     var body: some Scene {
         MenuBarExtra {
             PopoverView(monitor: monitor)
         } label: {
-            Label {
-                Text(monitor.currentData.formattedPower(monitor.currentData.systemPowerW, compact: true))
-            } icon: {
-                let isOnAC = monitor.currentData.isOnAC
-                let percent = monitor.currentData.batteryPercent
-                let systemName = isOnAC ? "bolt.fill" : monitor.currentData.batteryIconName
-                
-                if isOnAC {
-                    Image(systemName: systemName)
-                        .renderingMode(.original)
-                        .foregroundStyle(.green)
-                } else if percent <= 20 {
-                    Image(systemName: systemName)
-                        .renderingMode(.original)
-                        .foregroundStyle(.red)
-                } else if percent <= 50 {
-                    Image(systemName: systemName)
-                        .renderingMode(.original)
-                        .foregroundStyle(.orange)
-                } else {
-                    Image(systemName: systemName)
-                }
-            }
+            MenuBarLabelView(monitor: monitor)
+                .id(monitor.uiRefreshToken)
         }
         .menuBarExtraStyle(.window)
 
         Window(String(localized: "PowerTop Details"), id: "detail") {
             DetailWindowView(monitor: monitor)
-                .frame(minWidth: 520, minHeight: 500)
         }
         .windowStyle(.titleBar)
-        .defaultSize(width: 560, height: 640)
-
-        Settings {
-            EmptyView()
-        }
-    }
-
-    init() {
-        guard Self.instanceGuard != nil else {
-            DispatchQueue.main.async {
-                if let bundleID = Bundle.main.bundleIdentifier {
-                    let currentPID = ProcessInfo.processInfo.processIdentifier
-                    NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-                        .first { $0.processIdentifier != currentPID }?
-                        .activate(options: [])
-                }
-                NSApp.terminate(nil)
-            }
-            return
-        }
-
-        monitor.start()
+        .defaultSize(width: DetailWindowView.preferredWidth, height: 640)
+        .windowResizability(.contentSize)
     }
 }
