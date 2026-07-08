@@ -155,6 +155,7 @@
 "Device Information" = "设备信息";
 "Battery Serial Number" = "电池序列号";
 "Battery Management Chip" = "电池管理芯片";
+"Battery Gauge Chip" = "电量计芯片";
 "Device info is shown locally only and is not uploaded." = "设备信息仅在本地显示，不会上传。";
 
 // Detail - Footer
@@ -162,3 +163,8 @@
 
 // Hardware availability
 "Built-in battery not detected. PowerTop requires a MacBook." = "未检测到内置电池。PowerTop 仅支持 MacBook。";
+
+// Detail - Software Info
+"Software Information" = "软件信息";
+"Version" = "版本";
+"Build" = "构建号";

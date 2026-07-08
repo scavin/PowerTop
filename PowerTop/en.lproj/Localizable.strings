@@ -155,6 +155,7 @@
 "Device Information" = "Device Information";
 "Battery Serial Number" = "Battery Serial Number";
 "Battery Management Chip" = "Battery Management Chip";
+"Battery Gauge Chip" = "Battery Gauge Chip";
 "Device info is shown locally only and is not uploaded." = "Device info is shown locally only and is not uploaded.";
 
 // Detail - Footer
@@ -162,3 +163,8 @@
 
 // Hardware availability
 "Built-in battery not detected. PowerTop requires a MacBook." = "Built-in battery not detected. PowerTop requires a MacBook.";
+
+// Detail - Software Info
+"Software Information" = "Software Information";
+"Version" = "Version";
+"Build" = "Build";

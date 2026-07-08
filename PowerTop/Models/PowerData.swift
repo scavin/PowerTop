@@ -40,6 +40,7 @@ struct PowerData {
     let cycleCount: Int?
     let adapterDescription: String?
     let dataSource: PowerDataSource
+    let isPowerEstimated: Bool
     let timestamp: Date
     let connectionPhase: PowerConnectionPhase
 
@@ -189,6 +190,26 @@ struct PowerData {
         self.smoothedChargePowerW = smoothedChargePowerW
     }
 
+    func formattedPower(_ watts: Double, compact: Bool = false) -> String {
+        let prefix = isPowerEstimated ? "≈" : ""
+        return String(format: compact ? "%@%.1fW" : "%@%.1f W", prefix, watts)
+    }
+
+    var batteryIconName: String {
+        switch batteryPercent {
+        case 88...:
+            return "battery.100"
+        case 63..<88:
+            return "battery.75"
+        case 38..<63:
+            return "battery.50"
+        case 13..<38:
+            return "battery.25"
+        default:
+            return "battery.0"
+        }
+    }
+
     // MARK: - Computed properties
 
     var isConnectingAC: Bool {
@@ -231,7 +252,6 @@ struct PowerData {
     }
 
     /// Whether the battery is actively charging.
-    /// AC input exceeding system load means surplus is charging the battery.
     var isBatteryCharging: Bool {
         if clearlyOnBattery || isConnectingAC { return false }
         if isBatteryDischarging { return false }
@@ -278,6 +298,7 @@ struct PowerData {
         if isBatteryCharging { return String(localized: "AC Charging") }
         if isSupplementalDischarge { return String(localized: "AC + Battery Supplement") }
         if !effectiveIsOnAC { return String(localized: "Battery Discharging") }
+        if fullyCharged { return String(localized: "AC Fully Charged") }
         return String(localized: "AC Powered")
     }
 
@@ -519,7 +540,7 @@ struct PowerData {
         systemVoltageMV: nil, systemCurrentMA: nil,
         batteryVoltageMV: nil, batteryAmperageMA: nil,
         batteryTemperatureC: nil, cycleCount: nil,
-        adapterDescription: nil, dataSource: .telemetry, timestamp: Date(),
+        adapterDescription: nil, dataSource: .telemetry, isPowerEstimated: false, timestamp: Date(),
         connectionPhase: .onBattery,
         batteryHealthPercent: nil, designCapacityMAH: nil, rawMaxCapacityMAH: nil,
         nominalChargeCapacityMAH: nil, designCycleCount: nil,

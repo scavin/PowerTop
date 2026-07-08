@@ -639,6 +639,22 @@ struct DetailWindowView: View {
         return "\(count)"
     }
 
+    // MARK: - Software Info
+
+    private var softwareInfoSection: some View {
+        DetailSection(title: String(localized: "Software Information"), icon: "app.badge", color: .blue) {
+            DetailRow(label: String(localized: "Version"), value: appVersion)
+            DetailRow(label: String(localized: "Build"), value: appBuild)
+        }
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+    }
+
+    private var appBuild: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+    }
 }
 
 // MARK: - Helper Views

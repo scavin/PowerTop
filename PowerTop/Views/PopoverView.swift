@@ -91,6 +91,9 @@ struct PopoverView: View {
                 .padding(.vertical, 8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            monitor.refresh()
+        }
     }
 
     private static let popoverWidth: CGFloat = 280
