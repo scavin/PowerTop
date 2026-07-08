@@ -44,6 +44,18 @@ final class PowerMonitor {
     private var pendingRefreshWorkItems: [DispatchWorkItem] = []
     private let updateInterval: TimeInterval = 2.0
     private let connectingACTimeout: TimeInterval = 3.0
+    private let adapterProbeInterval: TimeInterval = 0.25
+
+    private var lastAdapterSignature: AdapterSignature?
+    private var adapterConnectedOverride: Bool?
+    private var adapterEstimateUntil: Date?
+    private var transitionRefreshGeneration = 0
+
+    private struct AdapterSignature: Equatable {
+        let wattage: Int
+        let description: String?
+        var isConnected: Bool { wattage > 0 }
+    }
 
     private enum MachinePhase: Equatable {
         case onBattery
@@ -67,12 +79,21 @@ final class PowerMonitor {
 
     func start() {
         guard timer == nil else { return }
-        let (raw, available) = readPowerData()
+
+        let adapterSignature = readAdapterSignature()
+        lastAdapterSignature = adapterSignature
+        adapterConnectedOverride = adapterSignature?.isConnected
+
+        let (raw, available) = readPowerData(
+            adapterConnectedOverride: adapterConnectedOverride,
+            useAdapterEstimate: false
+        )
         isDataAvailable = available
         lastExternalConnected = raw.isOnAC
         machinePhase = raw.isOnAC ? .onAC : .onBattery
         publishDisplayData(from: raw)
         scheduleTimer()
+        scheduleAdapterProbeTimer()
         setupPowerSourceNotification()
 
         let center = NSWorkspace.shared.notificationCenter
@@ -104,6 +125,8 @@ final class PowerMonitor {
         timeEstimator.reset()
         timer?.invalidate()
         timer = nil
+        adapterProbeTimer?.invalidate()
+        adapterProbeTimer = nil
         cancelPendingRefreshes()
         if let notifier = powerSourceNotifier {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), notifier, .commonModes)
@@ -128,10 +151,12 @@ final class PowerMonitor {
     }
 
     private func handleSystemWake() {
+        pollAdapterChanges()
         updateData()
         if timer == nil {
             scheduleTimer()
         }
+        scheduleAdapterProbeTimer()
     }
 
     // MARK: - IOPS Power Source Notification
@@ -145,6 +170,7 @@ final class PowerMonitor {
             guard let ctx = ctx else { return }
             let monitor = Unmanaged<PowerMonitor>.fromOpaque(ctx).takeUnretainedValue()
             DispatchQueue.main.async {
+                monitor.pollAdapterChanges()
                 monitor.handlePowerSourceEvent()
             }
         }
@@ -185,8 +211,55 @@ final class PowerMonitor {
         timer = newTimer
     }
 
+    /// AdapterDetails updates much sooner than the rest of the battery telemetry
+    /// when a USB-C PD adapter is attached, removed, or renegotiated. Probe only
+    /// that lightweight property so a charger transition can trigger immediate
+    /// full-data refreshes instead of waiting for stale IOPS values to expire.
+    private func scheduleAdapterProbeTimer() {
+        adapterProbeTimer?.invalidate()
+        let probeTimer = Timer(timeInterval: adapterProbeInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.pollAdapterChanges()
+            }
+        }
+        RunLoop.main.add(probeTimer, forMode: .common)
+        adapterProbeTimer = probeTimer
+    }
+
+    private func pollAdapterChanges() {
+        guard let signature = readAdapterSignature() else { return }
+
+        guard let previous = lastAdapterSignature else {
+            lastAdapterSignature = signature
+            adapterConnectedOverride = signature.isConnected
+            return
+        }
+        guard signature != previous else { return }
+
+        lastAdapterSignature = signature
+        adapterConnectedOverride = signature.isConnected
+        adapterEstimateUntil = Date().addingTimeInterval(15)
+        scheduleTransitionRefreshes()
+    }
+
+    private func scheduleTransitionRefreshes() {
+        transitionRefreshGeneration += 1
+        let generation = transitionRefreshGeneration
+
+        for delay: TimeInterval in [0, 0.1, 0.25, 0.5, 1, 1.5, 2, 3, 5, 8, 12] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, self.transitionRefreshGeneration == generation else { return }
+                self.updateData()
+            }
+        }
+    }
+
     private func updateData() {
-        let (raw, available) = readPowerData()
+        let useAdapterEstimate = adapterEstimateUntil.map { Date() < $0 } ?? false
+        let (raw, available) = readPowerData(
+            adapterConnectedOverride: adapterConnectedOverride,
+            useAdapterEstimate: useAdapterEstimate
+        )
         isDataAvailable = available
         publishDisplayData(from: raw)
     }
@@ -210,6 +283,7 @@ final class PowerMonitor {
         }
         updateData()
         scheduleCoalescedRefreshes()
+        scheduleTransitionRefreshes()
     }
 
     private func publishDisplayData(from raw: PowerData) {
@@ -276,14 +350,28 @@ final class PowerMonitor {
 
     // MARK: - IOKit Reading
 
-    private nonisolated func readPowerData() -> (PowerData, Bool) {
+    private nonisolated func readAdapterSignature() -> AdapterSignature? {
+        guard let props = getIOServiceProperties(className: "AppleSmartBattery") else {
+            return nil
+        }
+        let adapterDetails = extractDict(from: props, key: "AdapterDetails")
+        return AdapterSignature(
+            wattage: adapterDetails.flatMap { extractInt(from: $0, key: "Watts") } ?? 0,
+            description: adapterDetails.flatMap { extractString(from: $0, key: "Description") }
+        )
+    }
+
+    private nonisolated func readPowerData(
+        adapterConnectedOverride: Bool?,
+        useAdapterEstimate: Bool
+    ) -> (PowerData, Bool) {
         guard let props = getIOServiceProperties(className: "AppleSmartBattery") else {
             return (.empty, false)
         }
 
         // Basic battery info
         let rawIsOnAC = extractBool(from: props, key: "ExternalConnected") ?? false
-        let isOnAC = rawIsOnAC
+        let isOnAC = adapterConnectedOverride ?? rawIsOnAC
         let isCharging = isOnAC && (extractBool(from: props, key: "IsCharging") ?? false)
         let fullyCharged = extractBool(from: props, key: "FullyCharged") ?? false
         let currentCapacity = extractInt(from: props, key: "CurrentCapacity") ?? 0
@@ -436,6 +524,35 @@ final class PowerMonitor {
             let systemLoadW = Double(systemLoad) / 1000.0
             // BatteryPower: positive = discharge, negative = charge
             let batteryPowerFromTelemetry = Double(batteryPower) / 1000.0
+
+            let telemetryExceedsAdapter = isOnAC
+                && acAdapterWattage > 0
+                && reportedACInputW > Double(acAdapterWattage) * 1.1
+            if useAdapterEstimate || telemetryExceedsAdapter {
+                let estimatedSystemPowerW = abs(Double(systemLoad) / 1000.0)
+                let estimatedACInputW = isOnAC
+                    ? min(estimatedSystemPowerW, Double(acAdapterWattage))
+                    : 0
+                let estimatedBatteryPowerW = isOnAC
+                    ? max(estimatedSystemPowerW - estimatedACInputW, 0)
+                    : estimatedSystemPowerW
+
+                return (
+                    buildResult(
+                        estimatedSystemPowerW,
+                        estimatedBatteryPowerW,
+                        estimatedACInputW,
+                        wallEnergy.map { Double($0) / 1000.0 },
+                        adapterLoss.map { Double($0) / 1000.0 },
+                        sysVoltage,
+                        sysCurrent,
+                        .telemetry,
+                        true
+                    ),
+                    true
+                )
+            }
+
             let flow = resolveBatteryFlow(
                 isOnAC: isOnAC,
                 isChargingFlag: isCharging,
