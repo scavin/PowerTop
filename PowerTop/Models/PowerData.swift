@@ -107,7 +107,7 @@ struct PowerData {
         systemVoltageMV: Int?, systemCurrentMA: Int?,
         batteryVoltageMV: Int?, batteryAmperageMA: Int?,
         batteryTemperatureC: Double?, cycleCount: Int?,
-        adapterDescription: String?, dataSource: PowerDataSource, timestamp: Date,
+        adapterDescription: String?, dataSource: PowerDataSource, isPowerEstimated: Bool, timestamp: Date,
         connectionPhase: PowerConnectionPhase,
         batteryHealthPercent: Int?, designCapacityMAH: Int?, rawMaxCapacityMAH: Int?,
         nominalChargeCapacityMAH: Int?, designCycleCount: Int?,
@@ -146,6 +146,7 @@ struct PowerData {
         self.cycleCount = cycleCount
         self.adapterDescription = adapterDescription
         self.dataSource = dataSource
+        self.isPowerEstimated = isPowerEstimated
         self.timestamp = timestamp
         self.connectionPhase = connectionPhase
         self.batteryHealthPercent = batteryHealthPercent
@@ -584,7 +585,7 @@ struct PowerData {
             systemVoltageMV: systemVoltageMV, systemCurrentMA: systemCurrentMA,
             batteryVoltageMV: batteryVoltageMV, batteryAmperageMA: batteryAmperageMA,
             batteryTemperatureC: batteryTemperatureC, cycleCount: cycleCount,
-            adapterDescription: adapterDescription, dataSource: dataSource, timestamp: timestamp,
+            adapterDescription: adapterDescription, dataSource: dataSource, isPowerEstimated: isPowerEstimated, timestamp: timestamp,
             connectionPhase: phase,
             batteryHealthPercent: batteryHealthPercent, designCapacityMAH: designCapacityMAH,
             rawMaxCapacityMAH: rawMaxCapacityMAH, nominalChargeCapacityMAH: nominalChargeCapacityMAH,

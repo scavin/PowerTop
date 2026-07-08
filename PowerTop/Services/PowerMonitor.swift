@@ -37,7 +37,6 @@ final class PowerMonitor {
     }
 
     private var timer: Timer?
-    private var adapterProbeTimer: Timer?
     private var powerSourceNotifier: CFRunLoopSource?
     private var iopsRetainedContext: UnsafeMutableRawPointer?
     private var workspaceObservers: [NSObjectProtocol] = []
@@ -73,7 +72,6 @@ final class PowerMonitor {
         machinePhase = raw.isOnAC ? .onAC : .onBattery
         publishDisplayData(from: raw)
         scheduleTimer()
-        scheduleAdapterProbeTimer()
         setupPowerSourceNotification()
 
         let center = NSWorkspace.shared.notificationCenter
@@ -124,8 +122,6 @@ final class PowerMonitor {
         timeEstimator.reset()
         timer?.invalidate()
         timer = nil
-        adapterProbeTimer?.invalidate()
-        adapterProbeTimer = nil
     }
 
     private func handleSystemWake() {
@@ -283,9 +279,8 @@ final class PowerMonitor {
         }
 
         // Basic battery info
-        let rawIsOnAC = extractBool(from: props, key: "ExternalConnected") ?? false
-        let isOnAC = adapterConnectedOverride ?? rawIsOnAC
-        let isCharging = isOnAC && (extractBool(from: props, key: "IsCharging") ?? false)
+        let isOnAC = extractBool(from: props, key: "ExternalConnected") ?? false
+        let isCharging = extractBool(from: props, key: "IsCharging") ?? false
         let fullyCharged = extractBool(from: props, key: "FullyCharged") ?? false
         let currentCapacity = extractInt(from: props, key: "CurrentCapacity") ?? 0
         let maxCapacity = extractInt(from: props, key: "MaxCapacity") ?? 100
@@ -367,8 +362,8 @@ final class PowerMonitor {
             _ acInputW: Double,
             _ wallPowerW: Double?, _ adapterLossW: Double?,
             _ sysVoltage: Int?, _ sysCurrent: Int?,
-            _ dataSource: PowerDataSource, _ isEstimated: Bool
-        ) -> PowerData = { spw, bpw, aiw, wall, loss, sv, sc, ds, estimated in
+            _ dataSource: PowerDataSource
+        ) -> PowerData = { spw, bpw, aiw, wall, loss, sv, sc, ds in
             PowerData(
                 systemPowerW: spw, batteryPowerW: bpw, acInputW: aiw,
                 acAdapterWattage: acAdapterWattage, batteryPercent: batteryPercent,
@@ -378,7 +373,7 @@ final class PowerMonitor {
                 batteryVoltageMV: voltage, batteryAmperageMA: amperage,
                 batteryTemperatureC: temperature.map { TemperatureUnits.instantCelsius(fromCentidegrees: $0) },
                 cycleCount: cycleCount, adapterDescription: adapterDescription,
-                dataSource: ds, timestamp: Date(),
+                dataSource: ds, isPowerEstimated: false, timestamp: Date(),
                 connectionPhase: .onBattery,
                 batteryHealthPercent: batteryHealthPercent,
                 designCapacityMAH: designCapacity, rawMaxCapacityMAH: rawMaxCapacity,
@@ -437,38 +432,6 @@ final class PowerMonitor {
             let systemLoadW = Double(systemLoad) / 1000.0
             // BatteryPower: positive = discharge, negative = charge
             let batteryPowerFromTelemetry = Double(batteryPower) / 1000.0
-            let normalizedBatteryPowerW = -batteryPowerFromTelemetry
-
-            // AdapterDetails changes promptly, while the telemetry block may
-            // remain frozen on the previous PD contract. During that window,
-            // derive a conservative topology from current system load and the
-            // new adapter rating. Also reject impossible telemetry such as a
-            // 20 W adapter allegedly supplying 55 W.
-            let reportedACInputW = Double(systemPowerIn) / 1000.0
-            let telemetryExceedsAdapter = isOnAC
-                && acAdapterWattage > 0
-                && reportedACInputW > Double(acAdapterWattage) * 1.1
-            if useAdapterEstimate || telemetryExceedsAdapter {
-                let estimatedSystemPowerW = abs(Double(systemLoad) / 1000.0)
-                let estimatedACInputW = isOnAC
-                    ? min(estimatedSystemPowerW, Double(acAdapterWattage))
-                    : 0
-                let estimatedBatteryPowerW = isOnAC
-                    ? max(estimatedSystemPowerW - estimatedACInputW, 0)
-                    : estimatedSystemPowerW
-
-                return buildResult(
-                    estimatedSystemPowerW,
-                    estimatedBatteryPowerW,
-                    estimatedACInputW,
-                    wallEnergy.map { Double($0) / 1000.0 },
-                    adapterLoss.map { Double($0) / 1000.0 },
-                    sysVoltage,
-                    sysCurrent,
-                    .telemetry,
-                    true
-                )
-            }
 
             let flow = resolveBatteryFlow(
                 isOnAC: isOnAC,

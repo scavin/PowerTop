@@ -92,7 +92,7 @@ struct PopoverView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
-            monitor.refresh()
+            monitor.refreshNow()
         }
     }
 
