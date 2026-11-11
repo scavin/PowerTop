@@ -10,9 +10,9 @@ final class PowerPopover {
     let hostingController: NSHostingController<PopoverView>
     private let monitor: PowerMonitor
 
-    init(monitor: PowerMonitor, openDetails: @escaping () -> Void) {
+    init(monitor: PowerMonitor, preferences: DisplayPreferences, openDetails: @escaping () -> Void) {
         self.monitor = monitor
-        hostingController = NSHostingController(rootView: PopoverView(monitor: monitor, openDetails: openDetails))
+        hostingController = NSHostingController(rootView: PopoverView(monitor: monitor, preferences: preferences, openDetails: openDetails))
         hostingController.sizingOptions = [.preferredContentSize]
         popover.behavior = .transient
         popover.animates = false

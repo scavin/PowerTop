@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PopoverView: View {
     let monitor: PowerMonitor
+    @Bindable var preferences: DisplayPreferences
     let openDetails: () -> Void
 
     private var data: PowerData { monitor.currentData }
@@ -228,6 +229,13 @@ struct PopoverView: View {
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
             }
             .buttonStyle(.plain)
+
+            HStack {
+                Toggle(String(localized: "Show Power in Menu Bar"), isOn: $preferences.showMenuBarPower)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: 11))
+                Spacer()
+            }
 
             HStack {
                 Toggle(String(localized: "Launch at Login"), isOn: Binding(

@@ -5,10 +5,11 @@ import SwiftUI
 @MainActor
 final class MenuBarController: NSObject {
     private let monitor: PowerMonitor
+    private let preferences = DisplayPreferences()
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var appearanceObservation: NSKeyValueObservation?
     private var detailWindowController: NSWindowController?
-    private lazy var powerPopover = PowerPopover(monitor: monitor) { [weak self] in self?.openDetails() }
+    private lazy var powerPopover = PowerPopover(monitor: monitor, preferences: preferences) { [weak self] in self?.openDetails() }
     private var stopped = false
 
     init(monitor: PowerMonitor) {
@@ -45,7 +46,9 @@ final class MenuBarController: NSObject {
                                        isCharging: monitor.isOnExternalPower,
                                        colorScheme: isDark ? .dark : .light)
             : NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil)
-        button.title = " " + (monitor.hasData ? data.formattedPower(data.systemPowerW, compact: true) : "— W")
+        button.title = preferences.showMenuBarPower
+            ? " " + (monitor.hasData ? data.formattedPower(data.systemPowerW, compact: true) : "— W")
+            : ""
         button.toolTip = data.powerSourceDescription
     }
 

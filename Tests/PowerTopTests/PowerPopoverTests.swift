@@ -25,7 +25,7 @@ final class PowerPopoverTests: XCTestCase {
                 "BatteryPower": plugged ? 23640 : -27100]
             return props
         })
-        let content = PowerPopover(monitor: monitor, openDetails: {})
+        let content = PowerPopover(monitor: monitor, preferences: DisplayPreferences(), openDetails: {})
         let window = NSWindow(contentViewController: content.hostingController)
         window.isReleasedWhenClosed = false
         defer { window.contentViewController = nil; window.close() }
@@ -54,7 +54,7 @@ final class PowerPopoverTests: XCTestCase {
     func testLoadingPlaceholderExpandsToNativePreferredContentSize() async throws {
         var props: [String: Any]?
         let monitor = PowerMonitor(readBatteryProperties: { props })
-        let content = PowerPopover(monitor: monitor, openDetails: {})
+        let content = PowerPopover(monitor: monitor, preferences: DisplayPreferences(), openDetails: {})
         let window = NSWindow(contentViewController: content.hostingController)
         window.isReleasedWhenClosed = false
         defer { window.contentViewController = nil; window.close() }
