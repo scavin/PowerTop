@@ -97,8 +97,9 @@ PowerTop supports English and Simplified Chinese, automatically following your s
 
 MIT License. See [LICENSE](LICENSE) for details.
 
-Battery icons are adapted from [BatteryView](https://github.com/theMomax/BatteryView)
-by Max Obermeier (MIT). See [ThirdPartyNotices.txt](ThirdPartyNotices.txt).
+Battery icons use the original `SFSymbolStyle` and `Multicolor` configuration from
+[BatteryView](https://github.com/theMomax/BatteryView) by Max Obermeier (MIT).
+See [ThirdPartyNotices.txt](ThirdPartyNotices.txt).
 
 ---
 

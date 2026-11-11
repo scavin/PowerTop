@@ -1,0 +1,13 @@
+{
+  "pins" : [
+    {
+      "identity" : "batteryview",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/theMomax/BatteryView.git",
+      "state" : {
+        "revision" : "a800142347e2fc5e344a547fb29b6d46c3dddcf1"
+      }
+    }
+  ],
+  "version" : 2
+}

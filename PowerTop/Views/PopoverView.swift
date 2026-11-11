@@ -39,7 +39,6 @@ struct PopoverView: View {
             BatteryIconView(
                 percentage: data.batteryPercent,
                 isCharging: data.isBatteryCharging,
-                color: data.isBatteryCharging ? .green : (data.batteryPercent <= 20 ? .red : (data.batteryPercent <= 50 ? .orange : .primary)),
                 width: 30
             )
 

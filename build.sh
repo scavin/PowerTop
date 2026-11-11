@@ -22,32 +22,10 @@ echo "=== Building $APP_NAME $VERSION ($BUILD_NUMBER) ==="
 rm -rf "$BUILD_DIR"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 
-SWIFT_FILES=(
-    "$PROJECT_DIR/PowerTop/Utilities/IOKitHelpers.swift"
-    "$PROJECT_DIR/PowerTop/Models/PowerData.swift"
-    "$PROJECT_DIR/PowerTop/Services/PowerSourceObservation.swift"
-    "$PROJECT_DIR/PowerTop/Services/PowerMonitor.swift"
-    "$PROJECT_DIR/PowerTop/Views/BatteryIconView.swift"
-    "$PROJECT_DIR/PowerTop/Views/PowerRowView.swift"
-    "$PROJECT_DIR/PowerTop/Views/PopoverView.swift"
-    "$PROJECT_DIR/PowerTop/Views/DetailWindowView.swift"
-    "$PROJECT_DIR/PowerTop/PowerTopApp.swift"
-)
-
 echo "Compiling arm64 executable..."
-xcrun swiftc \
-    -target arm64-apple-macosx14.0 \
-    -sdk "$(xcrun --show-sdk-path --sdk macosx)" \
-    -framework SwiftUI \
-    -framework IOKit \
-    -framework CoreFoundation \
-    -framework AppKit \
-    -framework Foundation \
-    -framework ServiceManagement \
-    -parse-as-library \
-    -O \
-    -o "$EXECUTABLE" \
-    "${SWIFT_FILES[@]}"
+swift build --package-path "$PROJECT_DIR" --configuration release --product "$APP_NAME" --arch arm64
+SWIFT_BIN_DIR="$(swift build --package-path "$PROJECT_DIR" --configuration release --arch arm64 --show-bin-path)"
+/usr/bin/ditto --noextattr --noqtn "$SWIFT_BIN_DIR/$APP_NAME" "$EXECUTABLE"
 
 # ditto flags prevent source quarantine/provenance attributes entering the bundle.
 /usr/bin/ditto --noextattr --noqtn "$PROJECT_DIR/PowerTop/Info.plist" "$APP_BUNDLE/Contents/Info.plist"

@@ -53,6 +53,31 @@ final class PowerTopAppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+private struct PowerMenuBarLabel: View {
+    let monitor: PowerMonitor
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Label {
+            let data = monitor.currentData
+            Text(monitor.hasData ? data.formattedPower(data.systemPowerW, compact: true) : "— W")
+                .monospacedDigit()
+        } icon: {
+            if monitor.hasData {
+                Image(nsImage: MenuBarBatteryIcon.image(
+                    percentage: monitor.currentData.batteryPercent,
+                    isCharging: monitor.currentData.isBatteryCharging,
+                    colorScheme: colorScheme
+                ))
+                .renderingMode(monitor.currentData.isBatteryCharging || monitor.currentData.batteryPercent <= 20 ? .original : .template)
+            } else {
+                Image(systemName: "ellipsis.circle")
+            }
+        }
+        .help(monitor.currentData.powerSourceDescription)
+    }
+}
+
 @main
 struct PowerTopApp: App {
     @NSApplicationDelegateAdaptor(PowerTopAppDelegate.self) private var appDelegate
@@ -62,22 +87,7 @@ struct PowerTopApp: App {
         MenuBarExtra {
             PopoverView(monitor: monitor)
         } label: {
-            Label {
-                let data = monitor.currentData
-                Text(monitor.hasData ? data.formattedPower(data.systemPowerW, compact: true) : "— W")
-                    .monospacedDigit()
-            } icon: {
-                if monitor.hasData {
-                    Image(nsImage: MenuBarBatteryIcon.image(
-                        percentage: monitor.currentData.batteryPercent,
-                        isCharging: monitor.currentData.isBatteryCharging
-                    ))
-                    .renderingMode(monitor.currentData.isBatteryCharging || monitor.currentData.batteryPercent <= 50 ? .original : .template)
-                } else {
-                    Image(systemName: "ellipsis.circle")
-                }
-            }
-            .help(monitor.currentData.powerSourceDescription)
+            PowerMenuBarLabel(monitor: monitor)
         }
         .menuBarExtraStyle(.window)
 
