@@ -2,8 +2,7 @@ import SwiftUI
 
 struct PopoverView: View {
     let monitor: PowerMonitor
-    @Environment(\.openWindow) private var openWindow
-    @State private var isPresented = false
+    let openDetails: () -> Void
 
     private var data: PowerData { monitor.currentData }
 
@@ -29,12 +28,9 @@ struct PopoverView: View {
         }
         .frame(width: 280)
         .fixedSize(horizontal: false, vertical: true)
-        .background(MenuBarPopoverAnchor(isPresented: isPresented))
         .onAppear {
-            isPresented = true
             monitor.refresh()
         }
-        .onDisappear { isPresented = false }
     }
 
     // MARK: - Header
@@ -216,7 +212,7 @@ struct PopoverView: View {
     private var footerSection: some View {
         VStack(spacing: 6) {
             Button {
-                openDetailWindow()
+                openDetails()
             } label: {
                 HStack {
                     Image(systemName: "chart.bar.doc.horizontal")
@@ -251,21 +247,6 @@ struct PopoverView: View {
                 .foregroundStyle(.secondary)
             }
         }
-    }
-
-    private func openDetailWindow() {
-        let detailTitle = String(localized: "PowerTop Details")
-        // If window already exists, bring it to front
-        for window in NSApp.windows {
-            if window.title == detailTitle {
-                window.makeKeyAndOrderFront(nil)
-                NSApp.activate(ignoringOtherApps: true)
-                return
-            }
-        }
-        // Otherwise open new window directly
-        openWindow(id: "detail")
-        NSApp.activate(ignoringOtherApps: true)
     }
 }
 

@@ -32,6 +32,7 @@ private final class SingleInstanceGuard {
 final class PowerTopAppDelegate: NSObject, NSApplicationDelegate {
     let monitor = PowerMonitor()
     private var instanceGuard: SingleInstanceGuard?
+    private var menuBarController: MenuBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard let instanceGuard = SingleInstanceGuard() else {
@@ -46,61 +47,22 @@ final class PowerTopAppDelegate: NSObject, NSApplicationDelegate {
         }
         self.instanceGuard = instanceGuard
         monitor.start()
+        menuBarController = MenuBarController(monitor: monitor)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        menuBarController?.stop()
         monitor.stop()
-    }
-}
-
-private struct PowerMenuBarLabel: View {
-    let monitor: PowerMonitor
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Label {
-            let data = monitor.currentData
-            Text(monitor.hasData ? data.formattedPower(data.systemPowerW, compact: true) : "— W")
-                .monospacedDigit()
-        } icon: {
-            if monitor.hasData {
-                Image(nsImage: MenuBarBatteryIcon.image(
-                    percentage: monitor.currentData.batteryPercent,
-                    isCharging: monitor.isOnExternalPower,
-                    colorScheme: colorScheme
-                ))
-                .renderingMode(monitor.isOnExternalPower || monitor.currentData.batteryPercent <= 20 ? .original : .template)
-            } else {
-                Image(systemName: "ellipsis.circle")
-            }
-        }
-        .help(monitor.currentData.powerSourceDescription)
     }
 }
 
 @main
 struct PowerTopApp: App {
     @NSApplicationDelegateAdaptor(PowerTopAppDelegate.self) private var appDelegate
-    private var monitor: PowerMonitor { appDelegate.monitor }
 
     var body: some Scene {
-        MenuBarExtra {
-            PopoverView(monitor: monitor)
-        } label: {
-            PowerMenuBarLabel(monitor: monitor)
-        }
-        .menuBarExtraStyle(.window)
-
-        Window(String(localized: "PowerTop Details"), id: "detail") {
-            DetailWindowView(monitor: monitor)
-                .frame(minWidth: 520, minHeight: 500)
-        }
-        .windowStyle(.titleBar)
-        .defaultSize(width: 560, height: 640)
-
         Settings {
             EmptyView()
         }
     }
-
 }
