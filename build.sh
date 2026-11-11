@@ -26,6 +26,7 @@ SWIFT_FILES=(
     "$PROJECT_DIR/PowerTop/Utilities/IOKitHelpers.swift"
     "$PROJECT_DIR/PowerTop/Models/PowerData.swift"
     "$PROJECT_DIR/PowerTop/Services/PowerMonitor.swift"
+    "$PROJECT_DIR/PowerTop/Views/BatteryIconView.swift"
     "$PROJECT_DIR/PowerTop/Views/PowerRowView.swift"
     "$PROJECT_DIR/PowerTop/Views/PopoverView.swift"
     "$PROJECT_DIR/PowerTop/Views/DetailWindowView.swift"
@@ -73,6 +74,9 @@ for lproj in en.lproj zh-Hans.lproj; do
         "$PROJECT_DIR/PowerTop/$lproj/Localizable.strings" \
         "$APP_BUNDLE/Contents/Resources/$lproj/Localizable.strings"
 done
+
+/usr/bin/ditto --noextattr --noqtn \
+    "$PROJECT_DIR/ThirdPartyNotices.txt" "$APP_BUNDLE/Contents/Resources/ThirdPartyNotices.txt"
 
 # Remove any metadata introduced by local tools before signing.
 xattr -cr "$APP_BUNDLE"

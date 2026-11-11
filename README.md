@@ -14,6 +14,7 @@ A native macOS menu bar app for real-time power monitoring on Apple Silicon MacB
 
 - **Real-time Power Flow Diagram** — Visualize how power flows between AC adapter, battery, and system
 - **Instant Power Metrics** — System power consumption, AC adapter output, battery charge/discharge rate
+- **BatteryView-style Menu Bar Icon** — Continuous battery fill and charging bolt alongside system power
 - **Battery Health** — Health percentage, cycle count, design capacity, temperature
 - **Detailed Parameters** — Deep dive into battery cell data, charging details, lifetime statistics
 - **Power Source Notifications** — Instant UI refresh when AC is plugged/unplugged
@@ -96,6 +97,9 @@ PowerTop supports English and Simplified Chinese, automatically following your s
 
 MIT License. See [LICENSE](LICENSE) for details.
 
+Battery icons are adapted from [BatteryView](https://github.com/theMomax/BatteryView)
+by Max Obermeier (MIT). See [ThirdPartyNotices.txt](ThirdPartyNotices.txt).
+
 ---
 
 ## 中文说明
@@ -108,6 +112,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 - **实时功率流向图** — 可视化 AC 适配器、电池和系统之间的功率流向
 - **瞬时功率指标** — 系统功耗、AC 适配器输出、电池充放电功率
+- **BatteryView 风格菜单栏图标** — 按真实电量连续填充，充电时叠加闪电，旁边显示整机功耗
 - **电池健康** — 健康度百分比、循环次数、设计容量、温度
 - **详细参数** — 电芯数据、充电详情、生命周期统计
 - **电源变更通知** — 插拔电源即时刷新界面

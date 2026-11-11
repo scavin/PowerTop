@@ -28,9 +28,12 @@ struct PopoverView: View {
 
     private var headerSection: some View {
         HStack {
-            Image(systemName: data.effectiveIsOnAC ? "powerplug.fill" : data.batteryIconName)
-                .foregroundStyle(data.effectiveIsOnAC ? .green : (data.batteryPercent <= 20 ? .red : (data.batteryPercent <= 50 ? .orange : .primary)))
-                .font(.title3)
+            BatteryIconView(
+                percentage: data.batteryPercent,
+                isCharging: data.isBatteryCharging,
+                color: data.isBatteryCharging ? .green : (data.batteryPercent <= 20 ? .red : (data.batteryPercent <= 50 ? .orange : .primary)),
+                width: 30
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(data.powerSourceDescription)
@@ -93,7 +96,7 @@ struct PopoverView: View {
     private func sourceBox(title: String, value: String, color: Color, icon: String) -> some View {
         VStack(spacing: 3) {
             HStack(spacing: 3) {
-                Image(systemName: icon).font(.system(size: 10))
+                flowIcon(icon)
                 Text(title).font(.system(size: 10))
             }
             .foregroundStyle(.secondary)
@@ -108,7 +111,7 @@ struct PopoverView: View {
     private func destBox(title: String, value: String, color: Color, icon: String) -> some View {
         VStack(spacing: 3) {
             HStack(spacing: 3) {
-                Image(systemName: icon).font(.system(size: 10))
+                flowIcon(icon)
                 Text(title).font(.system(size: 10))
             }
             .foregroundStyle(.secondary)
@@ -118,6 +121,19 @@ struct PopoverView: View {
         }
         .padding(.horizontal, 10).padding(.vertical, 5)
         .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+    }
+
+    @ViewBuilder
+    private func flowIcon(_ name: String) -> some View {
+        if name.hasPrefix("battery.") {
+            BatteryIconView(
+                percentage: data.batteryPercent,
+                isCharging: name == "battery.100.bolt" && data.isBatteryCharging,
+                width: 18
+            )
+        } else {
+            Image(systemName: name).font(.system(size: 10))
+        }
     }
 
     // MARK: - Metrics
