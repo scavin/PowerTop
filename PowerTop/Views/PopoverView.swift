@@ -3,6 +3,7 @@ import SwiftUI
 struct PopoverView: View {
     let monitor: PowerMonitor
     @Environment(\.openWindow) private var openWindow
+    @State private var isPresented = false
 
     private var data: PowerData { monitor.currentData }
 
@@ -27,9 +28,13 @@ struct PopoverView: View {
             footerSection.padding(.horizontal, 14).padding(.vertical, 8)
         }
         .frame(width: 280)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(MenuBarPopoverAnchor(isPresented: isPresented))
         .onAppear {
+            isPresented = true
             monitor.refresh()
         }
+        .onDisappear { isPresented = false }
     }
 
     // MARK: - Header
