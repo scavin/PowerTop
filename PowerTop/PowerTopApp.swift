@@ -28,11 +28,35 @@ private final class SingleInstanceGuard {
     }
 }
 
+@MainActor
+final class PowerTopAppDelegate: NSObject, NSApplicationDelegate {
+    let monitor = PowerMonitor()
+    private var instanceGuard: SingleInstanceGuard?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        guard let instanceGuard = SingleInstanceGuard() else {
+            if let bundleID = Bundle.main.bundleIdentifier {
+                let currentPID = ProcessInfo.processInfo.processIdentifier
+                NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+                    .first { $0.processIdentifier != currentPID }?
+                    .activate(options: [])
+            }
+            NSApp.terminate(nil)
+            return
+        }
+        self.instanceGuard = instanceGuard
+        monitor.start()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        monitor.stop()
+    }
+}
+
 @main
 struct PowerTopApp: App {
-    private static let instanceGuard = SingleInstanceGuard()
-    @State private var monitor = PowerMonitor()
-    @Environment(\.openWindow) private var openWindow
+    @NSApplicationDelegateAdaptor(PowerTopAppDelegate.self) private var appDelegate
+    private var monitor: PowerMonitor { appDelegate.monitor }
 
     var body: some Scene {
         MenuBarExtra {
@@ -40,14 +64,18 @@ struct PowerTopApp: App {
         } label: {
             Label {
                 let data = monitor.currentData
-                Text(data.formattedPower(data.systemPowerW, compact: true))
+                Text(monitor.hasData ? data.formattedPower(data.systemPowerW, compact: true) : "— W")
                     .monospacedDigit()
             } icon: {
-                Image(nsImage: MenuBarBatteryIcon.image(
-                    percentage: monitor.currentData.batteryPercent,
-                    isCharging: monitor.currentData.isBatteryCharging
-                ))
-                .renderingMode(monitor.currentData.isBatteryCharging || monitor.currentData.batteryPercent <= 50 ? .original : .template)
+                if monitor.hasData {
+                    Image(nsImage: MenuBarBatteryIcon.image(
+                        percentage: monitor.currentData.batteryPercent,
+                        isCharging: monitor.currentData.isBatteryCharging
+                    ))
+                    .renderingMode(monitor.currentData.isBatteryCharging || monitor.currentData.batteryPercent <= 50 ? .original : .template)
+                } else {
+                    Image(systemName: "ellipsis.circle")
+                }
             }
             .help(monitor.currentData.powerSourceDescription)
         }
@@ -65,20 +93,4 @@ struct PowerTopApp: App {
         }
     }
 
-    init() {
-        guard Self.instanceGuard != nil else {
-            DispatchQueue.main.async {
-                if let bundleID = Bundle.main.bundleIdentifier {
-                    let currentPID = ProcessInfo.processInfo.processIdentifier
-                    NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-                        .first { $0.processIdentifier != currentPID }?
-                        .activate(options: [])
-                }
-                NSApp.terminate(nil)
-            }
-            return
-        }
-
-        monitor.start()
-    }
 }

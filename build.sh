@@ -25,6 +25,7 @@ mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 SWIFT_FILES=(
     "$PROJECT_DIR/PowerTop/Utilities/IOKitHelpers.swift"
     "$PROJECT_DIR/PowerTop/Models/PowerData.swift"
+    "$PROJECT_DIR/PowerTop/Services/PowerSourceObservation.swift"
     "$PROJECT_DIR/PowerTop/Services/PowerMonitor.swift"
     "$PROJECT_DIR/PowerTop/Views/BatteryIconView.swift"
     "$PROJECT_DIR/PowerTop/Views/PowerRowView.swift"

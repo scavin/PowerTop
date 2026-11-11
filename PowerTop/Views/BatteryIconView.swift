@@ -75,15 +75,15 @@ enum MenuBarBatteryIcon {
                 .environment(\.colorScheme, .light)
         )
         renderer.scale = 3
-        let image: NSImage
-        if let bitmap = renderer.cgImage {
-            image = NSImage(cgImage: bitmap, size: NSSize(width: 28, height: 28 / 2.15))
-        } else {
-            image = NSImage(
-                systemSymbolName: isCharging ? "battery.100.bolt" : "battery.0",
+        guard let bitmap = renderer.cgImage else {
+            let step = Int((Double(percent) / 25).rounded()) * 25
+            // Never cache a renderer failure as a permanent empty battery.
+            return NSImage(
+                systemSymbolName: isCharging ? "battery.100.bolt" : "battery.\(step)",
                 accessibilityDescription: nil
             )!
         }
+        let image = NSImage(cgImage: bitmap, size: NSSize(width: 28, height: 28 / 2.15))
         image.isTemplate = !isCharging && percent > 50
         cache.setObject(image, forKey: key)
         return image

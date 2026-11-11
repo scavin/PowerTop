@@ -8,14 +8,22 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            headerSection
-            Divider().padding(.horizontal, 12)
-            powerFlowDiagram.padding(.vertical, 10)
-            Divider().padding(.horizontal, 12)
-            metricsSection.padding(.horizontal, 14).padding(.vertical, 10)
-            Divider().padding(.horizontal, 12)
-            batterySection.padding(.horizontal, 14).padding(.vertical, 10)
-            Divider().padding(.horizontal, 12)
+            if monitor.hasData {
+                headerSection
+                Divider().padding(.horizontal, 12)
+                powerFlowDiagram.padding(.vertical, 10)
+                Divider().padding(.horizontal, 12)
+                metricsSection.padding(.horizontal, 14).padding(.vertical, 10)
+                Divider().padding(.horizontal, 12)
+                batterySection.padding(.horizontal, 14).padding(.vertical, 10)
+                Divider().padding(.horizontal, 12)
+            } else {
+                HStack(spacing: 10) {
+                    ProgressView().controlSize(.small)
+                    Text(String(localized: "Reading Power Data"))
+                }
+                .padding(20)
+            }
             footerSection.padding(.horizontal, 14).padding(.vertical, 8)
         }
         .frame(width: 280)

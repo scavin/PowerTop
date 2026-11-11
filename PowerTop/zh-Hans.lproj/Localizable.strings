@@ -30,6 +30,7 @@
 
 // Battery Section
 "Battery Level" = "电量";
+"Reading Power Data" = "正在读取电源数据…";
 "Health" = "健康度";
 "Battery Temp" = "电池温度";
 "Cycle Count" = "循环次数";

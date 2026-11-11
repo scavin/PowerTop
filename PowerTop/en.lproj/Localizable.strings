@@ -30,6 +30,7 @@
 
 // Battery Section
 "Battery Level" = "Battery Level";
+"Reading Power Data" = "Reading power data…";
 "Health" = "Health";
 "Battery Temp" = "Battery Temp";
 "Cycle Count" = "Cycle Count";

@@ -9,6 +9,7 @@ import ServiceManagement
 @Observable
 final class PowerMonitor {
     var currentData: PowerData = .empty
+    private(set) var hasData = false
     var launchAtLogin: Bool {
         didSet {
             do {
@@ -23,13 +24,15 @@ final class PowerMonitor {
         }
     }
 
-    private var timer: Timer?
-    private var adapterProbeTimer: Timer?
-    private var powerSourceNotifier: CFRunLoopSource?
-    private var lastAdapterSignature: AdapterSignature?
-    private var adapterConnectedOverride: Bool?
-    private var adapterEstimateUntil: Date?
-    private var transitionRefreshGeneration = 0
+    @ObservationIgnored private var timer: Timer?
+    @ObservationIgnored private var adapterProbeTimer: Timer?
+    @ObservationIgnored private var powerSourceObservation: PowerSourceObservation?
+    @ObservationIgnored private var lastAdapterSignature: AdapterSignature?
+    @ObservationIgnored private var adapterConnectedOverride: Bool?
+    @ObservationIgnored private var adapterEstimateUntil: Date?
+    @ObservationIgnored private var transitionRefreshGeneration = 0
+    @ObservationIgnored private var isRunning = false
+    @ObservationIgnored private let readBatteryProperties: () -> [String: Any]?
     private let updateInterval: TimeInterval = 2.0
     private let adapterProbeInterval: TimeInterval = 0.25
 
@@ -40,11 +43,23 @@ final class PowerMonitor {
         var isConnected: Bool { wattage > 0 }
     }
 
-    init() {
+    init(readBatteryProperties: @escaping () -> [String: Any]? = {
+        getIOServiceProperties(className: "AppleSmartBattery")
+    }) {
+        self.readBatteryProperties = readBatteryProperties
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
+        // Seed the first icon before SwiftUI displays the menu bar label.
+        updateData()
+    }
+
+    deinit {
+        timer?.invalidate()
+        adapterProbeTimer?.invalidate()
     }
 
     func start() {
+        guard !isRunning else { return }
+        isRunning = true
         let adapterSignature = readAdapterSignature()
         lastAdapterSignature = adapterSignature
         adapterConnectedOverride = adapterSignature?.isConnected
@@ -64,14 +79,15 @@ final class PowerMonitor {
     }
 
     func stop() {
+        isRunning = false
+        transitionRefreshGeneration += 1
         timer?.invalidate()
         timer = nil
         adapterProbeTimer?.invalidate()
         adapterProbeTimer = nil
-        if let notifier = powerSourceNotifier {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), notifier, .commonModes)
-            powerSourceNotifier = nil
-        }
+        powerSourceObservation?.invalidate()
+        powerSourceObservation = nil
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
     @objc private func systemDidSleep() {
@@ -82,6 +98,7 @@ final class PowerMonitor {
     }
 
     @objc private func systemDidWake() {
+        guard isRunning else { return }
         pollAdapterChanges()
         updateData()
         scheduleTimer()
@@ -91,16 +108,10 @@ final class PowerMonitor {
     // MARK: - IOPS Power Source Notification
 
     private func setupPowerSourceNotification() {
-        let context = Unmanaged.passUnretained(self).toOpaque()
-        let callback: IOPowerSourceCallbackType = { ctx in
-            guard let ctx = ctx else { return }
-            let monitor = Unmanaged<PowerMonitor>.fromOpaque(ctx).takeUnretainedValue()
-            monitor.pollAdapterChanges()
-            monitor.scheduleTransitionRefreshes()
-        }
-        powerSourceNotifier = IOPSNotificationCreateRunLoopSource(callback, context)?.takeRetainedValue()
-        if let notifier = powerSourceNotifier {
-            CFRunLoopAddSource(CFRunLoopGetMain(), notifier, .commonModes)
+        powerSourceObservation = PowerSourceObservation { [weak self] in
+            guard let self, self.isRunning else { return }
+            self.pollAdapterChanges()
+            self.scheduleTransitionRefreshes()
         }
     }
 
@@ -158,7 +169,7 @@ final class PowerMonitor {
 
         for delay: TimeInterval in [0, 0.1, 0.25, 0.5, 1, 1.5, 2, 3, 5, 8, 12] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self, self.transitionRefreshGeneration == generation else { return }
+                guard let self, self.isRunning, self.transitionRefreshGeneration == generation else { return }
                 self.updateData()
             }
         }
@@ -170,17 +181,18 @@ final class PowerMonitor {
 
     private func updateData() {
         let useAdapterEstimate = adapterEstimateUntil.map { Date() < $0 } ?? false
-        let data = readPowerData(
+        guard let data = readPowerData(
             adapterConnectedOverride: adapterConnectedOverride,
             useAdapterEstimate: useAdapterEstimate
-        )
+        ) else { return } // A failed read must not reset the icon to 0%.
         self.currentData = data
+        hasData = true
     }
 
     // MARK: - IOKit Reading
 
-    private nonisolated func readAdapterSignature() -> AdapterSignature? {
-        guard let props = getIOServiceProperties(className: "AppleSmartBattery") else {
+    private func readAdapterSignature() -> AdapterSignature? {
+        guard let props = readBatteryProperties() else {
             return nil
         }
         let adapterDetails = extractDict(from: props, key: "AdapterDetails")
@@ -190,12 +202,12 @@ final class PowerMonitor {
         )
     }
 
-    private nonisolated func readPowerData(
+    private func readPowerData(
         adapterConnectedOverride: Bool?,
         useAdapterEstimate: Bool
-    ) -> PowerData {
-        guard let props = getIOServiceProperties(className: "AppleSmartBattery") else {
-            return .empty
+    ) -> PowerData? {
+        guard let props = readBatteryProperties() else {
+            return nil
         }
 
         // Basic battery info
@@ -203,9 +215,17 @@ final class PowerMonitor {
         let isOnAC = adapterConnectedOverride ?? rawIsOnAC
         let isCharging = isOnAC && (extractBool(from: props, key: "IsCharging") ?? false)
         let fullyCharged = extractBool(from: props, key: "FullyCharged") ?? false
-        let currentCapacity = extractInt(from: props, key: "CurrentCapacity") ?? 0
-        let maxCapacity = extractInt(from: props, key: "MaxCapacity") ?? 100
-        let batteryPercent = maxCapacity > 0 ? (currentCapacity * 100 / maxCapacity) : 0
+        let currentCapacity = extractInt(from: props, key: "CurrentCapacity")
+        let maxCapacity = extractInt(from: props, key: "MaxCapacity")
+        let batteryPercent: Int
+        if let currentCapacity, let maxCapacity,
+           maxCapacity > 0, currentCapacity >= 0, currentCapacity <= maxCapacity {
+            batteryPercent = Int(Double(currentCapacity) * 100 / Double(maxCapacity))
+        } else if hasData {
+            batteryPercent = currentData.batteryPercent
+        } else {
+            return nil
+        }
         let voltage = extractInt(from: props, key: "Voltage")
         let amperage = extractInt(from: props, key: "Amperage")
         let temperature = extractInt(from: props, key: "Temperature")
