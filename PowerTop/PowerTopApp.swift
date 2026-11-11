@@ -1,4 +1,3 @@
-import SwiftUI
 import AppKit
 import Darwin
 
@@ -57,12 +56,17 @@ final class PowerTopAppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct PowerTopApp: App {
-    @NSApplicationDelegateAdaptor(PowerTopAppDelegate.self) private var appDelegate
-
-    var body: some Scene {
-        Settings {
-            EmptyView()
+@MainActor
+enum PowerTopApp {
+    static func main() {
+        let application = NSApplication.shared
+        application.setActivationPolicy(.accessory)
+        let delegate = PowerTopAppDelegate()
+        application.delegate = delegate
+        // NSApplication's delegate is weak. Own it for the whole event loop,
+        // without a SwiftUI scene that can open an unwanted Settings window.
+        withExtendedLifetime(delegate) {
+            application.run()
         }
     }
 }
