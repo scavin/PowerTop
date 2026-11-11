@@ -10,6 +10,9 @@ import ServiceManagement
 final class PowerMonitor {
     var currentData: PowerData = .empty
     private(set) var hasData = false
+    // Connection presentation is independent of charging telemetry and the
+    // 15-second power-estimation window.
+    private(set) var isOnExternalPower = false
     var launchAtLogin: Bool {
         didSet {
             do {
@@ -63,6 +66,7 @@ final class PowerMonitor {
         let adapterSignature = readAdapterSignature()
         lastAdapterSignature = adapterSignature
         adapterConnectedOverride = adapterSignature?.isConnected
+        if let adapterSignature { isOnExternalPower = adapterSignature.isConnected }
         updateData()
         scheduleTimer()
         scheduleAdapterProbeTimer()
@@ -149,6 +153,7 @@ final class PowerMonitor {
         guard let previous = lastAdapterSignature else {
             lastAdapterSignature = signature
             adapterConnectedOverride = signature.isConnected
+            isOnExternalPower = signature.isConnected
             return
         }
         guard signature != previous else { return }
@@ -157,6 +162,7 @@ final class PowerMonitor {
         // During a transition, AdapterDetails is authoritative because
         // ExternalConnected and SystemPowerIn commonly retain their old values.
         adapterConnectedOverride = signature.isConnected
+        isOnExternalPower = signature.isConnected
         // The remaining power telemetry can describe the previous adapter for
         // many seconds. Do not render that stale flow while PD renegotiates.
         adapterEstimateUntil = Date().addingTimeInterval(15)
@@ -187,6 +193,7 @@ final class PowerMonitor {
         ) else { return } // A failed read must not reset the icon to 0%.
         self.currentData = data
         hasData = true
+        isOnExternalPower = adapterConnectedOverride ?? data.effectiveIsOnAC
     }
 
     // MARK: - IOKit Reading

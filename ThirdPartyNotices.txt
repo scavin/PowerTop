@@ -4,7 +4,8 @@ Source revision: a800142347e2fc5e344a547fb29b6d46c3dddcf1
 
 PowerTop links the unmodified BatteryView library at the pinned revision
 above. BatteryIconView uses its original SFSymbolStyle and Multicolor
-configuration, including its font, fill geometry, masks, and animation.
+configuration, including its font, fill geometry, and masks. The style's
+animation option is set to nil to avoid animating the popover's initial layout.
 PowerTop reserves space outside the drawing to prevent clipping and renders
 the same view as a cached image for the macOS menu bar.
 

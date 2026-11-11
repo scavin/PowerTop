@@ -38,7 +38,7 @@ struct PopoverView: View {
         HStack {
             BatteryIconView(
                 percentage: data.batteryPercent,
-                isCharging: data.isBatteryCharging,
+                isCharging: monitor.isOnExternalPower,
                 width: 30
             )
 

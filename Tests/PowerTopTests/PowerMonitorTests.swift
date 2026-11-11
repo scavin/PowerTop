@@ -66,6 +66,65 @@ final class PowerMonitorTests: XCTestCase {
         }
     }
 
+    func testACIndicatorAppearsBeforeChargingTelemetryAndEstimateWindowEnds() async {
+        await MainActor.run {
+            var sample = Self.sample(level: 81)
+            sample["PowerTelemetryData"] = ["SystemLoad": 12000, "SystemPowerIn": 0, "BatteryPower": -12000]
+            let monitor = PowerMonitor(readBatteryProperties: { sample })
+            monitor.start()
+            defer { monitor.stop() }
+            XCTAssertFalse(monitor.isOnExternalPower)
+            XCTAssertFalse(monitor.currentData.isPowerEstimated)
+
+            sample["AdapterDetails"] = ["Watts": 70]
+            NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+
+            XCTAssertTrue(monitor.isOnExternalPower)
+            XCTAssertFalse(monitor.currentData.isBatteryCharging)
+            XCTAssertTrue(monitor.currentData.isPowerEstimated)
+        }
+    }
+
+    func testUnplugClearsIndicatorWithStaleChargingTelemetry() async {
+        await MainActor.run {
+            var sample = Self.sample(level: 81)
+            sample["AdapterDetails"] = ["Watts": 70]
+            sample["ExternalConnected"] = true
+            sample["IsCharging"] = true
+            let monitor = PowerMonitor(readBatteryProperties: { sample })
+            monitor.start()
+            defer { monitor.stop() }
+            XCTAssertTrue(monitor.isOnExternalPower)
+
+            sample["AdapterDetails"] = [String: Any]()
+            NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+
+            XCTAssertFalse(monitor.isOnExternalPower)
+            XCTAssertFalse(monitor.currentData.isBatteryCharging)
+        }
+    }
+
+    func testACIndicatorDoesNotWaitForSuccessfulFullBatteryRead() async {
+        await MainActor.run {
+            let base = Self.sample(level: 81)
+            var pending: [[String: Any]?] = []
+            let monitor = PowerMonitor(readBatteryProperties: {
+                pending.isEmpty ? base : pending.removeFirst()
+            })
+            monitor.start()
+            defer { monitor.stop() }
+            var connected = base
+            connected["AdapterDetails"] = ["Watts": 70]
+            pending = [connected, nil]
+
+            NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+
+            XCTAssertTrue(monitor.isOnExternalPower)
+            XCTAssertEqual(monitor.currentData.batteryPercent, 81)
+            XCTAssertFalse(monitor.currentData.isBatteryCharging)
+        }
+    }
+
     func testObservationInvalidatesSourceBeforeCallbackContextDies() async {
         await MainActor.run {
             var observation: PowerSourceObservation? = PowerSourceObservation(onChange: {})

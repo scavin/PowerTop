@@ -59,4 +59,24 @@ final class BatteryIconRenderingTests: XCTestCase {
             }
         }
     }
+
+    func testMenuBarImageHasTransparentMarginsOnEverySide() async {
+        await MainActor.run {
+            let image = MenuBarBatteryIcon.image(percentage: 73, isCharging: true)
+            XCTAssertEqual(image.size, NSSize(width: 30, height: 18))
+            guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                XCTFail("Could not read menu bar bitmap")
+                return
+            }
+            let bitmap = NSBitmapImageRep(cgImage: cgImage)
+            for x in 0..<bitmap.pixelsWide {
+                XCTAssertLessThan(bitmap.colorAt(x: x, y: 0)?.alphaComponent ?? 1, 0.01)
+                XCTAssertLessThan(bitmap.colorAt(x: x, y: bitmap.pixelsHigh - 1)?.alphaComponent ?? 1, 0.01)
+            }
+            for y in 0..<bitmap.pixelsHigh {
+                XCTAssertLessThan(bitmap.colorAt(x: 0, y: y)?.alphaComponent ?? 1, 0.01)
+                XCTAssertLessThan(bitmap.colorAt(x: bitmap.pixelsWide - 1, y: y)?.alphaComponent ?? 1, 0.01)
+            }
+        }
+    }
 }

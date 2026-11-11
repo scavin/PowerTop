@@ -66,10 +66,10 @@ private struct PowerMenuBarLabel: View {
             if monitor.hasData {
                 Image(nsImage: MenuBarBatteryIcon.image(
                     percentage: monitor.currentData.batteryPercent,
-                    isCharging: monitor.currentData.isBatteryCharging,
+                    isCharging: monitor.isOnExternalPower,
                     colorScheme: colorScheme
                 ))
-                .renderingMode(monitor.currentData.isBatteryCharging || monitor.currentData.batteryPercent <= 20 ? .original : .template)
+                .renderingMode(monitor.isOnExternalPower || monitor.currentData.batteryPercent <= 20 ? .original : .template)
             } else {
                 Image(systemName: "ellipsis.circle")
             }
