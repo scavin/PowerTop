@@ -235,7 +235,20 @@ struct PopoverView: View {
                     .toggleStyle(.checkbox)
                     .font(.system(size: 11))
                 Spacer()
+                if preferences.showMenuBarPower {
+                    Picker(String(localized: "Power Metric"), selection: $preferences.menuBarPowerMetric) {
+                        ForEach(MenuBarPowerMetric.allCases) { metric in
+                            Text(metric.title).tag(metric)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .controlSize(.mini)
+                    .frame(width: 108)
+                    .help(preferences.menuBarPowerMetric.explanation)
+                }
             }
+            .frame(height: 20)
 
             HStack {
                 Toggle(String(localized: "Launch at Login"), isOn: Binding(

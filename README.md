@@ -14,7 +14,8 @@ A native macOS menu bar app for real-time power monitoring on Apple Silicon MacB
 
 - **Real-time Power Flow Diagram** — Visualize how power flows between AC adapter, battery, and system
 - **Instant Power Metrics** — System power consumption, AC adapter output, battery charge/discharge rate
-- **BatteryView Menu Bar Icon** — Original proportional battery drawing and an immediate AC connection bolt alongside system power, without entrance animation
+- **BatteryView Menu Bar Icon** — Original proportional battery drawing and an immediate AC connection bolt, without entrance animation
+- **Optional Menu Bar Power** — Enable the power checkbox and choose system consumption, adapter total input, or battery net power in the adjacent dropdown. Battery net power uses `+` for charging and `−` for discharging. The display is off by default and remembers both choices; inferred values use `≈`.
 - **Battery Health** — Health percentage, cycle count, design capacity, temperature
 - **Detailed Parameters** — Deep dive into battery cell data, charging details, lifetime statistics
 - **Power Source Notifications** — Instant UI refresh when AC is plugged/unplugged

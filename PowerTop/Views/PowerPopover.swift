@@ -9,9 +9,11 @@ final class PowerPopover {
     let popover = NSPopover()
     let hostingController: NSHostingController<PopoverView>
     private let monitor: PowerMonitor
+    private let preferences: DisplayPreferences
 
     init(monitor: PowerMonitor, preferences: DisplayPreferences, openDetails: @escaping () -> Void) {
         self.monitor = monitor
+        self.preferences = preferences
         hostingController = NSHostingController(rootView: PopoverView(monitor: monitor, preferences: preferences, openDetails: openDetails))
         hostingController.sizingOptions = [.preferredContentSize]
         popover.behavior = .transient
@@ -24,6 +26,7 @@ final class PowerPopover {
         withObservationTracking {
             _ = monitor.currentData
             _ = monitor.hasData
+            _ = preferences.showMenuBarPower
         } onChange: { [weak self] in
             // Observation fires before assignment. Measure after SwiftUI has
             // received the new sample, outside its current layout transaction.

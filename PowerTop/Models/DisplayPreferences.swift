@@ -10,8 +10,14 @@ final class DisplayPreferences {
         didSet { defaults.set(showMenuBarPower, forKey: "showMenuBarPower") }
     }
 
+    var menuBarPowerMetric: MenuBarPowerMetric {
+        didSet { defaults.set(menuBarPowerMetric.rawValue, forKey: "menuBarPowerMetric") }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         showMenuBarPower = defaults.bool(forKey: "showMenuBarPower")
+        menuBarPowerMetric = defaults.string(forKey: "menuBarPowerMetric")
+            .flatMap(MenuBarPowerMetric.init(rawValue:)) ?? .system
     }
 }

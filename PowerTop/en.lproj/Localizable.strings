@@ -40,6 +40,12 @@
 // Footer
 "Details" = "Details";
 "Show Power in Menu Bar" = "Show Power in Menu Bar";
+"Power Metric" = "Power Metric";
+"Adapter Input" = "Adapter Input";
+"Battery Net" = "Battery Net";
+"Computer operating power, excluding battery charging." = "Computer operating power, excluding battery charging.";
+"Total adapter power delivered to the Mac. Zero when unplugged." = "Total adapter power delivered to the Mac. Zero when unplugged.";
+"Battery net power: + charging, − discharging." = "Battery net power: + charging, − discharging.";
 "Launch at Login" = "Launch at Login";
 "Quit" = "Quit";
 

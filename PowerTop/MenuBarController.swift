@@ -46,10 +46,12 @@ final class MenuBarController: NSObject {
                                        isCharging: monitor.isOnExternalPower,
                                        colorScheme: isDark ? .dark : .light)
             : NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil)
-        button.title = preferences.showMenuBarPower
-            ? " " + (monitor.hasData ? data.formattedPower(data.systemPowerW, compact: true) : "— W")
-            : ""
-        button.toolTip = data.powerSourceDescription
+        let metric = preferences.menuBarPowerMetric
+        let power = metric.formattedPower(from: monitor.hasData ? data : nil)
+        button.title = preferences.showMenuBarPower ? " " + power : ""
+        button.toolTip = preferences.showMenuBarPower
+            ? "\(metric.title): \(power)\n\(metric.explanation)\n\(data.powerSourceDescription)"
+            : data.powerSourceDescription
     }
 
     @objc private func togglePopover() {

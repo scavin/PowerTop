@@ -40,6 +40,12 @@
 // Footer
 "Details" = "详细参数";
 "Show Power in Menu Bar" = "菜单栏显示功率";
+"Power Metric" = "功率类型";
+"Adapter Input" = "适配器总输入";
+"Battery Net" = "电池净功率";
+"Computer operating power, excluding battery charging." = "电脑运行消耗的功率，不含电池充电。";
+"Total adapter power delivered to the Mac. Zero when unplugged." = "适配器送入电脑的总功率，拔电后为 0。";
+"Battery net power: + charging, − discharging." = "电池净功率：+ 表示充入，− 表示放出。";
 "Launch at Login" = "开机启动";
 "Quit" = "退出";
 
