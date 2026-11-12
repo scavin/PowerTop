@@ -14,6 +14,10 @@ A native macOS menu bar app for real-time power monitoring on Apple Silicon MacB
 
 - **Real-time Power Flow Diagram** — Visualize how power flows between AC adapter, battery, and system
 - **Instant Power Metrics** — System power consumption, AC adapter output, battery charge/discharge rate
+- **BatteryView Menu Bar Icon** — Original proportional battery drawing and an immediate AC connection bolt, without entrance animation
+- **Optional Menu Bar Power** — Enable the power checkbox and choose system consumption, adapter total input, battery net power, or automatic mode in the adjacent dropdown. Battery net power uses `+` for charging and `−` for discharging. Automatic mode shows adapter input during charging and system load otherwise. The display is off by default and remembers the selection; inferred values use `≈`. The gear menu offers optional 99 W display capping and supply warnings; the tooltip always retains the full value.
+- **Battery Time Estimates** — Prefer valid system estimates; otherwise use remaining energy and smoothed battery power. Estimates respect macOS/active AlDente charge limits and stop while power readings conflict.
+- **Battery Topology and History** — Read pack/bank/cell nodes, show series-group voltage/Qmax, available parallel-cell currents and balance summaries, controller lifetime statistics, and validated manufacture dates. Missing fields stay hidden.
 - **Battery Health** — Health percentage, cycle count, design capacity, temperature
 - **Detailed Parameters** — Deep dive into battery cell data, charging details, lifetime statistics
 - **Power Source Notifications** — Instant UI refresh when AC is plugged/unplugged
@@ -80,13 +84,15 @@ PowerTop reads power data from macOS IOKit's `AppleSmartBattery` service, specif
 | `SystemLoad` | Total system power consumption |
 | `SystemPowerIn` | DC power from AC adapter |
 | `BatteryPower` | Battery charge/discharge power |
-| `Amperage` × `Voltage` | Actual battery charge rate (more reliable than BatteryPower) |
+| `Amperage` × `Voltage` | Signed battery power: positive charging, negative discharging |
 
 ### Power Calculation Logic
 
-- **On AC charging**: System power = `SystemPowerIn` - charge rate (AC input minus what goes to battery)
-- **On battery**: System power = `BatteryPower` (discharge rate = system consumption)
-- **Charge rate**: Calculated from `abs(Amperage) × Voltage / 1,000,000` for accuracy
+- **On AC**: Calculate system consumption from input and signed battery power in the same telemetry block. Charging subtracts from input; battery discharge adds to input.
+- **On battery**: Ignore stale adapter input and normalize battery discharge to positive consumption.
+- **Battery direction**: Preserve the sign of `BatteryPower` and `Amperage × Voltage`. A delayed `IsCharging` flag cannot turn discharge into charge. Signed current is the fallback when battery power telemetry is missing.
+- **Conflicting readings**: Display `— W` until opposite battery directions or impossible power balances resolve. An actual zero adapter input is never treated as a missing reading; inferred values for missing input carry `≈`.
+- **Refresh**: The app polls every 2 seconds; macOS can update the underlying readings less frequently and at different times.
 
 ## Localization
 
@@ -95,6 +101,10 @@ PowerTop supports English and Simplified Chinese, automatically following your s
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+Battery icons use the original `SFSymbolStyle` and `Multicolor` configuration from
+[BatteryView](https://github.com/theMomax/BatteryView) by Max Obermeier (MIT).
+See [ThirdPartyNotices.txt](ThirdPartyNotices.txt).
 
 ---
 
@@ -108,6 +118,10 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 - **实时功率流向图** — 可视化 AC 适配器、电池和系统之间的功率流向
 - **瞬时功率指标** — 系统功耗、AC 适配器输出、电池充放电功率
+- **BatteryView 菜单栏图标** — 保留原版比例和配色，接入外部电源即显示闪电，无入场动画；可选显示整机功耗、输入功率、电池净流入/流出或自动模式
+- **剩余时间估算** — 优先使用有效系统估算，否则根据剩余能量和近期电池功率计算；识别 macOS/运行中的 AlDente 充电上限，读数冲突时隐藏估算。
+- **电芯与历史数据** — 读取电池包、串联组和电芯节点，显示真实分组的电压/Qmax、可用的并联电流及均衡摘要、生命周期统计和有效制造日期；不显示缺失数据。
+- **显示选项** — 功率复选框旁选择数值类型；底部齿轮菜单可选 99 W 数字封顶和供电警告，默认关闭，完整功率仍可悬停查看。
 - **电池健康** — 健康度百分比、循环次数、设计容量、温度
 - **详细参数** — 电芯数据、充电详情、生命周期统计
 - **电源变更通知** — 插拔电源即时刷新界面
@@ -145,6 +159,10 @@ open build/PowerTop.app
 
 ### 功率计算逻辑
 
-- **AC 充电时**：系统功耗 = `SystemPowerIn` - 充电功率（AC 输入减去向电池供电的部分）
-- **电池供电时**：系统功耗 = `BatteryPower`（放电功率 = 系统消耗）
-- **充电功率**：使用 `abs(Amperage) × Voltage / 1,000,000` 计算，比 BatteryPower 更准确
+- **接入 AC 时**：使用同一组遥测中的输入功率和有符号电池功率计算系统功耗；电池充电时从输入中扣除，电池补充供电时加上放电功率。
+- **电池供电时**：忽略残留的适配器输入，将电池放电功率统一表示为正的系统消耗。
+- **充放电方向**：保留 `BatteryPower` 和 `Amperage × Voltage` 的正负号，滞后的 `IsCharging` 标志不能将放电变为充电。缺少电池功率遥测时才回退到有符号电流计算。
+- **读数冲突时**：充放电方向相反或功率关系不成立时，暂时显示 `— W`，一致后自动恢复。实际输入为 0 W 不会被当作缺失值；缺失输入的推算值带有 `≈`。
+- **刷新间隔**：应用每 2 秒读取一次，macOS 底层字段的更新可能更慢，也可能不同步。
+
+Upstream synchronization details / 上游同步记录: [docs/upstream-sync.md](docs/upstream-sync.md).

@@ -30,6 +30,7 @@
 
 // Battery Section
 "Battery Level" = "Battery Level";
+"Reading Power Data" = "Reading power data…";
 "Health" = "Health";
 "Battery Temp" = "Battery Temp";
 "Cycle Count" = "Cycle Count";
@@ -38,6 +39,13 @@
 
 // Footer
 "Details" = "Details";
+"Show Power in Menu Bar" = "Show Power in Menu Bar";
+"Power Metric" = "Power Metric";
+"Adapter Input" = "Adapter Input";
+"Battery Net" = "Battery Net";
+"Computer operating power, excluding battery charging." = "Computer operating power, excluding battery charging.";
+"Total adapter power delivered to the Mac. Zero when unplugged." = "Total adapter power delivered to the Mac. Zero when unplugged.";
+"Battery net power: + charging, − discharging." = "Battery net power: + charging, − discharging.";
 "Launch at Login" = "Launch at Login";
 "Quit" = "Quit";
 
@@ -118,3 +126,70 @@
 "Software Information" = "Software Information";
 "Version" = "Version";
 "Build" = "Build";
+
+// Upstream feature synchronization
+"AC + Battery Supplement" = "AC + Battery Supplement";
+"AC Connecting" = "AC Connecting";
+"Battery Supplement" = "Battery Supplement";
+"Current Power" = "Current Power";
+"Charging Status" = "Charging Status";
+"Not Charging" = "Not Charging";
+"Historical Averages" = "Historical Averages";
+"Avg Wall Outlet Power" = "Avg Wall Outlet Power";
+"Avg Adapter Loss" = "Avg Adapter Loss";
+"Estimation Mode — telemetry unavailable" = "Estimation Mode — telemetry unavailable";
+"Remaining Capacity" = "Remaining Capacity";
+"Est. Time to Empty" = "Est. Time to Empty";
+"Est. Time to Full" = "Est. Time to Full";
+"Est. Time to %d%%" = "Est. Time to %d%%";
+"Estimated to %d%% charge limit (%@)." = "Estimated to %d%% charge limit (%@).";
+"Charge Limit" = "Charge Limit";
+"macOS setting" = "macOS setting";
+"Optimized Charging" = "Optimized Charging";
+"Estimated from remaining energy and smoothed power (macOS no longer provides this)." = "Estimated from remaining energy and smoothed power (macOS no longer provides this).";
+"Average System Power" = "Average System Power";
+"Manufacture Date" = "Manufacture Date";
+"At a Glance" = "At a Glance";
+"Capacity" = "Capacity";
+"Charging & Care" = "Charging & Care";
+"Live Readings" = "Live Readings";
+"Capacity Details" = "Capacity Details";
+"Electrical Readings" = "Electrical Readings";
+"—" = "—";
+"Status & Alerts" = "Status & Alerts";
+"Current Full Charge" = "Current Full Charge";
+"Calibrated Full Charge" = "Calibrated Full Charge";
+"Remaining Charge" = "Remaining Charge";
+"Full Charge Capacity" = "Full Charge Capacity";
+"Cell %d" = "Cell %d";
+"Battery topology: %dS%dP (%d cells)" = "Battery topology: %dS%dP (%d cells)";
+"Battery topology: %d series groups" = "Battery topology: %d series groups";
+"Battery topology: %d cells" = "Battery topology: %d cells";
+"Series Groups" = "Series Groups";
+"Series Group %d" = "Series Group %d";
+"Parallel Cell Currents" = "Parallel Cell Currents";
+"Series Group %d · Cell %d" = "Series Group %d · Cell %d";
+"Series group Qmax is the parallel group's estimated full-charge capacity (mAh), not derived from cell currents." = "Series group Qmax is the parallel group's estimated full-charge capacity (mAh), not derived from cell currents.";
+"Qmax %d mAh" = "Qmax %d mAh";
+"Instantaneous current per parallel cell; unequal split within a group is normal." = "Instantaneous current per parallel cell; unequal split within a group is normal.";
+"Cell Balance" = "Cell Balance";
+"Series Voltage Balance" = "Series Voltage Balance";
+"Parallel Current Balance" = "Parallel Current Balance";
+"%d mA max within-group spread — %@" = "%d mA max within-group spread — %@";
+"%d mV spread — %@" = "%d mV spread — %@";
+"Fair" = "Fair";
+"Worth Checking" = "Worth Checking";
+"Since First Use" = "Since First Use";
+"Protection Trigger Count" = "Protection Trigger Count";
+"0 (normal)" = "0 (normal)";
+"Battery Management Chip" = "Battery Management Chip";
+"Device info is shown locally only and is not uploaded." = "Device info is shown locally only and is not uploaded.";
+"Updated at %@" = "Updated at %@";
+"Built-in battery not detected. PowerTop requires a MacBook." = "Built-in battery not detected. PowerTop requires a MacBook.";
+"Automatic" = "Automatic";
+"Adapter input while charging; system power otherwise." = "Adapter input while charging; system power otherwise.";
+"Cap Menu Bar Power at 99 W" = "Cap Menu Bar Power at 99 W";
+"Show Power Warnings" = "Show Power Warnings";
+"Power Display Options" = "Power Display Options";
+"Estimated from remaining energy and recent power." = "Estimated from remaining energy and recent power.";
+"Daily SOC Range" = "Daily SOC Range";

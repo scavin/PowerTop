@@ -1,4 +1,3 @@
-import SwiftUI
 import AppKit
 import Darwin
 
@@ -28,68 +27,46 @@ private final class SingleInstanceGuard {
     }
 }
 
-@main
-struct PowerTopApp: App {
-    private static let instanceGuard = SingleInstanceGuard()
-    @State private var monitor = PowerMonitor()
-    @Environment(\.openWindow) private var openWindow
+@MainActor
+final class PowerTopAppDelegate: NSObject, NSApplicationDelegate {
+    let monitor = PowerMonitor()
+    private var instanceGuard: SingleInstanceGuard?
+    private var menuBarController: MenuBarController?
 
-    var body: some Scene {
-        MenuBarExtra {
-            PopoverView(monitor: monitor)
-        } label: {
-            Label {
-                Text(monitor.currentData.formattedPower(monitor.currentData.systemPowerW, compact: true))
-            } icon: {
-                let isOnAC = monitor.currentData.isOnAC
-                let percent = monitor.currentData.batteryPercent
-                let systemName = isOnAC ? "bolt.fill" : monitor.currentData.batteryIconName
-                
-                if isOnAC {
-                    Image(systemName: systemName)
-                        .renderingMode(.original)
-                        .foregroundStyle(.green)
-                } else if percent <= 20 {
-                    Image(systemName: systemName)
-                        .renderingMode(.original)
-                        .foregroundStyle(.red)
-                } else if percent <= 50 {
-                    Image(systemName: systemName)
-                        .renderingMode(.original)
-                        .foregroundStyle(.orange)
-                } else {
-                    Image(systemName: systemName)
-                }
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        guard let instanceGuard = SingleInstanceGuard() else {
+            if let bundleID = Bundle.main.bundleIdentifier {
+                let currentPID = ProcessInfo.processInfo.processIdentifier
+                NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+                    .first { $0.processIdentifier != currentPID }?
+                    .activate(options: [])
             }
-        }
-        .menuBarExtraStyle(.window)
-
-        Window(String(localized: "PowerTop Details"), id: "detail") {
-            DetailWindowView(monitor: monitor)
-                .frame(minWidth: 520, minHeight: 500)
-        }
-        .windowStyle(.titleBar)
-        .defaultSize(width: 560, height: 640)
-
-        Settings {
-            EmptyView()
-        }
-    }
-
-    init() {
-        guard Self.instanceGuard != nil else {
-            DispatchQueue.main.async {
-                if let bundleID = Bundle.main.bundleIdentifier {
-                    let currentPID = ProcessInfo.processInfo.processIdentifier
-                    NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-                        .first { $0.processIdentifier != currentPID }?
-                        .activate(options: [])
-                }
-                NSApp.terminate(nil)
-            }
+            NSApp.terminate(nil)
             return
         }
-
+        self.instanceGuard = instanceGuard
         monitor.start()
+        menuBarController = MenuBarController(monitor: monitor)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        menuBarController?.stop()
+        monitor.stop()
+    }
+}
+
+@main
+@MainActor
+enum PowerTopApp {
+    static func main() {
+        let application = NSApplication.shared
+        application.setActivationPolicy(.accessory)
+        let delegate = PowerTopAppDelegate()
+        application.delegate = delegate
+        // NSApplication's delegate is weak. Own it for the whole event loop,
+        // without a SwiftUI scene that can open an unwanted Settings window.
+        withExtendedLifetime(delegate) {
+            application.run()
+        }
     }
 }

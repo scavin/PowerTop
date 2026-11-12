@@ -14,12 +14,16 @@ struct PowerRowView: View {
 
             Text(label)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
 
             Spacer()
 
             Text(value)
                 .fontWeight(.medium)
                 .monospacedDigit()
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.trailing)
         }
         .font(.system(size: 12))
     }
