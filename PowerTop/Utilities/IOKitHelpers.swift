@@ -2,29 +2,28 @@ import Foundation
 import IOKit
 
 func getIOServiceProperties(className: String) -> [String: Any]? {
+    getAllIOServiceProperties(className: className).first
+}
+
+func getAllIOServiceProperties(className: String) -> [[String: Any]] {
     let matching = IOServiceMatching(className)
     var iterator: io_iterator_t = 0
 
     let kr = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator)
-    guard kr == KERN_SUCCESS else { return nil }
+    guard kr == KERN_SUCCESS else { return [] }
     defer { IOObjectRelease(iterator) }
 
-    let service = IOIteratorNext(iterator)
-    guard service != 0 else { return nil }
-    defer { IOObjectRelease(service) }
-
-    var properties: Unmanaged<CFMutableDictionary>?
-    let propResult = IORegistryEntryCreateCFProperties(
-        service,
-        &properties,
-        kCFAllocatorDefault,
-        0
-    )
-    guard propResult == KERN_SUCCESS, let props = properties?.takeRetainedValue() else {
-        return nil
+    var results: [[String: Any]] = []
+    while true {
+        let service = IOIteratorNext(iterator)
+        guard service != 0 else { break }
+        defer { IOObjectRelease(service) }
+        var properties: Unmanaged<CFMutableDictionary>?
+        guard IORegistryEntryCreateCFProperties(service, &properties, kCFAllocatorDefault, 0) == KERN_SUCCESS,
+              let props = properties?.takeRetainedValue() as? [String: Any] else { continue }
+        results.append(props)
     }
-
-    return props as? [String: Any]
+    return results
 }
 
 func extractInt(from dict: [String: Any], key: String) -> Int? {
@@ -48,7 +47,9 @@ func extractBool(from dict: [String: Any], key: String) -> Bool? {
 }
 
 func extractString(from dict: [String: Any], key: String) -> String? {
-    return dict[key] as? String
+    guard let value = dict[key] as? String else { return nil }
+    let text = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return text.isEmpty ? nil : text
 }
 
 func extractDict(from dict: [String: Any], key: String) -> [String: Any]? {

@@ -47,7 +47,7 @@ struct PopoverView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(data.powerSourceDescription)
                     .font(.system(size: 13, weight: .semibold))
-                Text(data.formattedPower(data.effectiveIsOnAC ? data.effectiveACOutputW : data.systemPowerW))
+                Text(data.formattedPower(data.headerPowerW))
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
             }
@@ -63,7 +63,12 @@ struct PopoverView: View {
 
     private var powerFlowDiagram: some View {
         VStack(spacing: 6) {
-            if data.effectiveIsOnAC {
+            if data.hasPowerDataConflict {
+                Text("— W")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+            } else if data.effectiveIsOnAC {
                 if data.isSupplementalDischarge {
                     // AC and battery are both sources feeding the system.
                     HStack(spacing: 6) {
@@ -156,7 +161,7 @@ struct PopoverView: View {
             if data.isBatteryCharging {
                 PowerRowView(icon: "arrow.down.to.line", iconColor: .blue, label: String(localized: "Battery Charging"), value: data.formattedPower(data.batteryChargeRateW))
             } else if data.isSupplementalDischarge {
-                PowerRowView(icon: "arrow.up.right.and.arrow.down.left", iconColor: .orange, label: String(localized: "Battery Discharge"), value: data.formattedPower(data.systemPowerW - data.acInputW))
+                PowerRowView(icon: "arrow.up.right.and.arrow.down.left", iconColor: .orange, label: String(localized: "Battery Discharge"), value: data.formattedPower(data.batteryProvidesW))
             }
             if data.effectiveIsOnAC && data.acAdapterWattage > 0 {
                 PowerRowView(icon: "bolt.fill", iconColor: .green, label: String(localized: "Charger Spec"), value: "\(data.acAdapterWattage) W" + (data.adapterDescription.map { " (\($0))" } ?? ""))
@@ -171,24 +176,33 @@ struct PopoverView: View {
 
     private var batterySection: some View {
         VStack(spacing: 7) {
+            if let time = data.estimatedTimeRemainingText {
+                PowerRowView(icon: "clock", iconColor: .secondary,
+                             label: data.estimatedTimeRemainingLabel,
+                             value: (data.estimatedTimeIsComputed ? "≈" : "") + time)
+            }
             HStack(spacing: 8) {
                 Text(String(localized: "Battery Level")).font(.system(size: 12)).foregroundStyle(.secondary)
+                    .frame(width: 66, alignment: .leading)
                 ProgressView(value: Double(data.batteryPercent), total: 100)
                     .progressViewStyle(.linear)
                     .tint(data.batteryPercent <= 20 ? .red : (data.batteryPercent <= 50 ? .orange : .green))
                 Text("\(data.batteryPercent)%")
-                    .font(.system(size: 12, weight: .medium, design: .rounded)).monospacedDigit()
+                    .font(.system(size: 12, weight: .medium)).monospacedDigit()
+                    .frame(width: 36, alignment: .trailing)
             }
 
             if let health = data.batteryHealthPercent {
                 HStack(spacing: 8) {
                     Text(String(localized: "Health")).font(.system(size: 12)).foregroundStyle(.secondary)
+                        .frame(width: 66, alignment: .leading)
                     ProgressView(value: Double(health), total: 100)
                         .progressViewStyle(.linear)
                         .tint(health >= 80 ? .green : (health >= 60 ? .orange : .red))
                     Text("\(health)%")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .font(.system(size: 12, weight: .medium))
                         .monospacedDigit()
+                        .frame(width: 36, alignment: .trailing)
                         .foregroundStyle(health >= 80 ? .green : (health >= 60 ? .orange : .red))
                 }
             }
@@ -229,11 +243,16 @@ struct PopoverView: View {
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
             }
             .buttonStyle(.plain)
+            .focusEffectDisabled()
 
             HStack {
-                Toggle(String(localized: "Show Power in Menu Bar"), isOn: $preferences.showMenuBarPower)
+                Toggle(isOn: $preferences.showMenuBarPower) {
+                    Text(String(localized: "Show Power in Menu Bar"))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                     .toggleStyle(.checkbox)
                     .font(.system(size: 11))
+                    .layoutPriority(1)
                 Spacer()
                 if preferences.showMenuBarPower {
                     Picker(String(localized: "Power Metric"), selection: $preferences.menuBarPowerMetric) {
@@ -248,7 +267,7 @@ struct PopoverView: View {
                     .help(preferences.menuBarPowerMetric.explanation)
                 }
             }
-            .frame(height: 20)
+            .frame(minHeight: 20)
 
             HStack {
                 Toggle(String(localized: "Launch at Login"), isOn: Binding(
@@ -260,12 +279,27 @@ struct PopoverView: View {
 
                 Spacer()
 
+                if preferences.showMenuBarPower {
+                    Menu {
+                        Toggle(String(localized: "Cap Menu Bar Power at 99 W"), isOn: $preferences.capMenuBarPower)
+                        Toggle(String(localized: "Show Power Warnings"), isOn: $preferences.showPowerWarnings)
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .menuStyle(.borderlessButton)
+                    .frame(width: 22)
+                    .help(String(localized: "Power Display Options"))
+                }
+
                 Button(String(localized: "Quit")) {
                     NSApplication.shared.terminate(nil)
                 }
                 .font(.system(size: 11))
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+            }
+            if let error = monitor.launchAtLoginError {
+                Text(error).font(.system(size: 10)).foregroundStyle(.red)
             }
         }
     }

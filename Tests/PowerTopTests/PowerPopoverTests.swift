@@ -1,8 +1,65 @@
 import XCTest
 import AppKit
+import SwiftUI
 @testable import PowerTop
 
 final class PowerPopoverTests: XCTestCase {
+    @MainActor
+    func testRichDetailsAndPowerOptionsFitTheirNativeContainers() async throws {
+        let monitor = PowerMonitor(readBatteryProperties: {
+            ["CurrentCapacity": 64, "MaxCapacity": 100, "ExternalConnected": true,
+             "Voltage": 12000, "Amperage": -500, "CycleCount": 162, "DesignCycleCount9C": 1000,
+             "AdapterDetails": ["Watts": 140, "Description": "USB-C Power Adapter"],
+             "BatteryData": ["DesignCapacity": 6000, "FullChargeCapacity": 5700, "RemainingCapacity": 3600],
+             "PowerTelemetryData": ["SystemPowerIn": 18000, "BatteryPower": -6000, "SystemLoad": 24000]]
+        }, readBatteryRegistry: {
+            .init(pack: ["BatteryData": ["Temperature": 3659,
+                "LifetimeData": ["MaximumTemperature": 42, "MinimumTemperature": 19, "AverageTemperature": 265,
+                                 "TotalOperatingTime": 9386, "MaximumChargeCurrent": 6607, "MaximumDischargeCurrent": -4239]]],
+                  banks: (0..<3).map { ["BankID": $0, "BatteryData": ["CellVoltage": 3861 + $0 * 6, "Qmax": 5946 - $0 * 24]] },
+                  cells: (0..<3).flatMap { bank in (0..<2).map { ["BankID": bank, "CellID": $0, "CellData": ["CellCurrent": 60 + $0]] } })
+        })
+        let defaults = UserDefaults(suiteName: "PowerTopTests.Layout.\(UUID().uuidString)")!
+        let preferences = DisplayPreferences(defaults: defaults)
+        preferences.showMenuBarPower = true
+        preferences.menuBarPowerMetric = .automatic
+        let content = PowerPopover(monitor: monitor, preferences: preferences, openDetails: {})
+        let popoverWindow = NSWindow(contentViewController: content.hostingController)
+        let details = NSHostingController(rootView: DetailWindowView(monitor: monitor))
+        let detailWindow = NSWindow(contentViewController: details)
+        detailWindow.setContentSize(NSSize(width: DetailWindowView.preferredWidth, height: 2200))
+        let minimalMonitor = PowerMonitor(readBatteryProperties: {
+            ["CurrentCapacity": 64, "MaxCapacity": 100, "ExternalConnected": false,
+             "Voltage": 12000, "Amperage": -500]
+        })
+        let minimalDetails = NSHostingController(rootView: DetailWindowView(monitor: minimalMonitor))
+        let minimalWindow = NSWindow(contentViewController: minimalDetails)
+        minimalWindow.setContentSize(NSSize(width: DetailWindowView.preferredWidth, height: 700))
+        for window in [popoverWindow, detailWindow, minimalWindow] { window.isReleasedWhenClosed = false }
+        defer {
+            content.stop()
+            for window in [popoverWindow, detailWindow, minimalWindow] { window.contentViewController = nil; window.close() }
+        }
+        try await settleLayout(content)
+        details.view.layoutSubtreeIfNeeded()
+        XCTAssertEqual(content.popover.contentSize.width, 280, accuracy: 0.5)
+        XCTAssertEqual(details.view.bounds.width, DetailWindowView.preferredWidth, accuracy: 0.5)
+        let directory = ProcessInfo.processInfo.environment["POWERTOP_QA_DIR"]
+            ?? FileManager.default.temporaryDirectory.appendingPathComponent("PowerTop-Layout-QA").path
+        do {
+            try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+            minimalDetails.view.layoutSubtreeIfNeeded()
+            for (name, view) in [("popover", content.hostingController.view), ("details", details.view),
+                                 ("details-unavailable", minimalDetails.view)] {
+                let bitmap = try XCTUnwrap(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+                view.cacheDisplay(in: view.bounds, to: bitmap)
+                let png = try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))
+                try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent(name + ".png"))
+            }
+            print("PowerTop layout previews: \(directory)")
+        }
+    }
+
     @MainActor
     private func settleLayout(_ content: PowerPopover) async throws {
         for _ in 0..<5 {

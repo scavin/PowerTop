@@ -3,6 +3,18 @@ import XCTest
 
 final class MenuBarPowerMetricTests: XCTestCase {
     @MainActor
+    func testAutomaticModeCapsOnlyItsDisplayAndWarningsStayOptional() {
+        let data = sample(onAC: true, charging: true, input: 140000, battery: 60000, load: 80000, amperage: 5000)
+        XCTAssertEqual(MenuBarPowerMetric.automatic.formattedPower(from: data), "140.0W")
+        XCTAssertEqual(MenuBarPowerMetric.automatic.formattedPower(from: data, capped: true), "≥99W")
+        XCTAssertEqual(MenuBarPowerMetric.automatic.formattedPower(from: data, capped: true, showWarnings: true), "⚠ ≥99W")
+        XCTAssertEqual(data.effectiveACOutputW, 140)
+        let supplement = sample(onAC: true, charging: false, input: 18000, battery: -6000, load: 24000, amperage: -500)
+        XCTAssertEqual(MenuBarPowerMetric.automatic.formattedPower(from: supplement), "24.0W")
+        XCTAssertEqual(MenuBarPowerMetric.automatic.formattedPower(from: supplement, showWarnings: true), "⚠ 24.0W")
+    }
+
+    @MainActor
     private func sample(onAC: Bool, charging: Bool, input: Int, battery: Int, load: Int, amperage: Int) -> PowerData {
         let monitor = PowerMonitor(readBatteryProperties: {
             ["CurrentCapacity": 74, "MaxCapacity": 100,
@@ -38,7 +50,12 @@ final class MenuBarPowerMetricTests: XCTestCase {
         for metric in MenuBarPowerMetric.allCases {
             XCTAssertEqual(metric.formattedPower(from: nil), "— W")
         }
-        let missingInput = sample(onAC: true, charging: true, input: 0, battery: 60000, load: 20000, amperage: 5000)
+        let missingInput = PowerMonitor(readBatteryProperties: {
+            ["CurrentCapacity": 74, "MaxCapacity": 100,
+             "ExternalConnected": true, "IsCharging": true,
+             "Voltage": 12000, "Amperage": 5000,
+             "PowerTelemetryData": ["BatteryPower": 60000, "SystemLoad": 20000]]
+        }).currentData
         XCTAssertEqual(MenuBarPowerMetric.adapterInput.formattedPower(from: missingInput), "≈80.0W")
 
         let staleCharge = sample(onAC: false, charging: true, input: 80000, battery: 60000, load: -12000, amperage: -1000)

@@ -4,6 +4,23 @@ import AppKit
 @testable import PowerTop
 
 final class PowerMonitorTests: XCTestCase {
+    @MainActor
+    func testExplicitUnplugEventOverridesCachedAdapterDetails() {
+        var sample = Self.sample(level: 81)
+        sample["ExternalConnected"] = true
+        sample["AdapterDetails"] = ["Watts": 100]
+        let monitor = PowerMonitor(readBatteryProperties: { sample })
+        monitor.start()
+        defer { monitor.stop() }
+        XCTAssertTrue(monitor.isOnExternalPower)
+        sample["ExternalConnected"] = false
+        monitor.handlePowerSourceEvent()
+        XCTAssertFalse(monitor.isOnExternalPower)
+        monitor.refresh()
+        XCTAssertFalse(monitor.currentData.effectiveIsOnAC)
+        XCTAssertEqual(monitor.currentData.acInputW, 0)
+    }
+
     func testFirstFrameAlreadyHasRealBatteryLevel() async {
         await MainActor.run {
             let monitor = PowerMonitor(readBatteryProperties: { Self.sample(level: 81) })
